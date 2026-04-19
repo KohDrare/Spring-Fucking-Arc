@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Fucking Arc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Deep space mauve */
+    --bg-0:  #0a0618;   /* near black, cold violet */
+    --bg-1:  #1a0f35;   /* deep mauve */
+    --bg-2:  #2a1856;   /* mid mauve */
+    --ink:   #e8dffb;   /* pale lavender ink */
+    --ink-dim: #7d6fa8;
+    --ink-faint: #3d2f5c;
+    --mauve:   #b58bff;   /* bright mauve — the accent */
+    --mauve-soft: #8b6dcc;
+    --lilac:   #d4b5ff;   /* pale bright lilac */
+    --rose:    #e89fff;   /* pink-mauve highlight */
+    --star:    #fff0d6;   /* warm star white */
+    --line: rgba(232, 223, 251, 0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-0);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: none;
+  }
+
+  /* ==== DEEP SPACE BACKDROP ==== */
+  .space-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 30%, rgba(181, 139, 255, 0.18), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 80% 70%, rgba(232, 159, 255, 0.12), transparent 55%),
+      radial-gradient(ellipse 100% 80% at 50% 110%, rgba(42, 24, 86, 0.6), transparent 65%),
+      radial-gradient(ellipse 60% 40% at 50% -10%, rgba(26, 15, 53, 0.7), transparent 50%),
+      linear-gradient(180deg, #0a0618 0%, #120828 50%, #0a0618 100%);
+  }
+  .space-bg canvas { position: absolute; inset: 0; }
+
+  /* Grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.09;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Vignette */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.55) 100%);
+  }
+
+  /* ==== CURSOR ==== */
+  .cursor {
+    position: fixed;
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--lilac);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.18s ease, height 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    mix-blend-mode: screen;
+  }
+  .cursor.hover {
+    width: 46px; height: 46px;
+    border-color: var(--rose);
+  }
+  .cursor.grabbing {
+    width: 14px; height: 14px;
+    background: var(--rose);
+    border-color: var(--rose);
+  }
+  .cursor-dot {
+    position: fixed;
+    width: 4px; height: 4px;
+    background: var(--lilac);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ==== TOP BAR ==== */
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 22px 34px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    z-index: 50;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(to bottom, rgba(10, 6, 24, 0.9) 50%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .top-bar .left em {
+    color: var(--rose);
+    font-style: normal;
+  }
+  .top-bar .right { display: flex; gap: 28px; }
+  .top-bar .right b {
+    color: var(--ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .top-bar .clock { color: var(--mauve); font-variant-numeric: tabular-nums; }
+
+  /* ==== TITLE (background layer) ==== */
+  .title-wrap {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;  /* BEHIND bubbles (z-index 3) */
+    pointer-events: none;
+    user-select: none;
+    width: 100%;
+  }
+  .title-pre {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.4em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+  .title-pre span { color: var(--mauve-soft); opacity: 0.6; }
+  .title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(60px, 13vw, 230px);
+    line-height: 0.86;
+    letter-spacing: -0.04em;
+    color: var(--ink-faint);
+    opacity: 0.85;
+  }
+  .title .fucking {
+    font-style: italic;
+    font-weight: 900;
+    color: var(--mauve-soft);
+    display: inline-block;
+    transform: translateY(-6px) rotate(-2.5deg);
+    opacity: 0.7;
+  }
+  .title .arc {
+    font-weight: 900;
+    font-style: normal;
+    letter-spacing: -0.05em;
+    color: var(--ink-faint);
+  }
+  .title-sub {
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-top: 32px;
+  }
+
+  /* ==== PROGRESS ==== */
+  .progress-section {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 22px 34px 26px;
+    background: linear-gradient(to top, rgba(10, 6, 24, 0.92) 50%, transparent);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+    border-top: 1px solid var(--line);
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  .progress-meta .label { font-style: italic; }
+  .progress-meta .pct {
+    color: var(--lilac);
+    font-weight: 600;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+  }
+  .progress-meta .days b {
+    color: var(--ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .progress-track {
+    height: 2px;
+    background: var(--line);
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--mauve), var(--rose));
+    width: 0%;
+    transition: width 1.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    box-shadow: 0 0 24px rgba(181, 139, 255, 0.6);
+  }
+  .progress-fill.live {
+    transition: width 1s linear;
+  }
+  .progress-fill::after {
+    content: "";
+    position: absolute;
+    right: -5px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background: var(--rose);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--rose), 0 0 40px var(--mauve);
+  }
+  .progress-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    font-style: italic;
+  }
+  .progress-markers .now {
+    color: var(--rose);
+    font-weight: 500;
+  }
+
+  /* ==== SIDE MARKERS ==== */
+  .side-marker {
+    position: fixed;
+    left: 34px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: left center;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.4em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .side-marker-right {
+    position: fixed;
+    right: 34px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: right center;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.4em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .side-marker-right span { color: var(--mauve); }
+
+  /* ==== BUBBLE CANVAS (in front of title) ==== */
+  canvas.bubble-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+  }
+
+  /* ==== HINT ==== */
+  .hint {
+    position: fixed;
+    bottom: 92px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.3em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  .hint span { color: var(--mauve); }
+
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* ==== NOTES PANEL ==== */
+  .notes-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(10, 6, 24, 0.7);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    cursor: none;
+  }
+  .notes-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .notes-panel {
+    width: min(620px, 92vw);
+    max-height: 80vh;
+    background: linear-gradient(160deg, rgba(26, 15, 53, 0.96), rgba(42, 24, 86, 0.92));
+    border: 1px solid rgba(181, 139, 255, 0.25);
+    border-radius: 4px;
+    padding: 32px 36px 28px;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.5),
+      0 0 60px rgba(181, 139, 255, 0.15),
+      inset 0 1px 0 rgba(212, 181, 255, 0.1);
+    transform: scale(0.94) translateY(10px);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+  }
+  .notes-overlay.active .notes-panel {
+    transform: scale(1) translateY(0);
+  }
+  .notes-tag {
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.35em;
+    color: var(--mauve);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .notes-title {
+    font-family: 'Fraunces', serif;
+    font-size: 44px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .notes-title b {
+    font-style: normal;
+    font-weight: 900;
+    color: var(--lilac);
+  }
+  .notes-sub {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-style: italic;
+    letter-spacing: 0.2em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .notes-textarea {
+    flex: 1;
+    min-height: 260px;
+    background: rgba(10, 6, 24, 0.5);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 18px 20px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--ink);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .notes-textarea::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .notes-textarea:focus {
+    border-color: rgba(181, 139, 255, 0.5);
+  }
+  .notes-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.22em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .notes-footer .saved { color: var(--mauve); opacity: 0; transition: opacity 0.3s; }
+  .notes-footer .saved.show { opacity: 1; }
+  .notes-close {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 8px 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+  .notes-close:hover {
+    color: var(--ink);
+    border-color: var(--mauve);
+  }
+
+  @media (max-width: 768px) {
+    .title { font-size: 58px; }
+    .side-marker, .side-marker-right { display: none; }
+    html, body { cursor: auto; }
+    .cursor, .cursor-dot { display: none; }
+    .notes-overlay { cursor: auto; }
+    .notes-close { cursor: pointer; }
+    .notes-panel { padding: 24px; }
+    .notes-title { font-size: 32px; }
+    .top-bar { padding: 16px 20px; font-size: 10px; letter-spacing: 0.15em; }
+    .top-bar .right { gap: 14px; }
+    .progress-section { padding: 16px 20px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="space-bg">
+  <canvas id="starCanvas"></canvas>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<div class="top-bar">
+  <div class="left"><em>◈</em> &nbsp; Spring / Summer 2026 &nbsp; — &nbsp; KohDrare</div>
+  <div class="right">
+    <div>Day <b id="dayCount">001</b></div>
+    <div>Ver. <b>1.0</b></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<div class="side-marker">19.04.2026 — 31.08.2026</div>
+<div class="side-marker-right"><span>●</span> &nbsp; 135 jours avant la fin</div>
+
+<div class="title-wrap">
+  <div class="title-pre"><span>◆</span> &nbsp; l'arc de printemps / été &nbsp; <span>◆</span></div>
+  <h1 class="title">
+    Spring <span class="fucking">fucking</span> <span class="arc">ARC</span>
+  </h1>
+  <div class="title-sub">— sept domaines, une trajectoire —</div>
+</div>
+
+<canvas class="bubble-canvas" id="bubbleCanvas"></canvas>
+
+<div class="progress-section">
+  <div class="progress-meta">
+    <div class="label">Progression de l'Arc</div>
+    <div class="pct" id="pctLabel">0.0%</div>
+    <div class="days"><b id="daysDone">0</b> &nbsp;/&nbsp; <b id="daysTotal">134</b>&nbsp; jours</div>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-markers">
+    <span>19 avril — départ</span>
+    <span>mai</span>
+    <span>juin</span>
+    <span>juillet</span>
+    <span class="now">31 août — rise</span>
+  </div>
+</div>
+
+<!-- NOTES MODAL -->
+<div class="notes-overlay" id="notesOverlay">
+  <div class="notes-panel" onclick="event.stopPropagation()">
+    <div class="notes-tag" id="notesTag">[ 00 ] — Domaine</div>
+    <h2 class="notes-title" id="notesTitle"><b>Rise</b></h2>
+    <div class="notes-sub" id="notesSub">Notes, idées, prochaines actions</div>
+    <textarea class="notes-textarea" id="notesTextarea" placeholder="Écris ici. Tout est sauvegardé automatiquement."></textarea>
+    <div class="notes-footer">
+      <div class="saved" id="savedIndicator">✓ sauvegardé</div>
+      <button class="notes-close" id="notesClose">fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// CURSOR
+// =====================================================
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursorDot');
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let cursorX = mouseX, cursorY = mouseY;
+
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  cursorDot.style.left = mouseX + 'px';
+  cursorDot.style.top = mouseY + 'px';
+});
+
+function animateCursor() {
+  cursorX += (mouseX - cursorX) * 0.18;
+  cursorY += (mouseY - cursorY) * 0.18;
+  cursor.style.left = cursorX + 'px';
+  cursor.style.top = cursorY + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// =====================================================
+// DATES — Timezone Europe/Brussels (gère CET/CEST auto)
+// =====================================================
+const TZ = 'Europe/Brussels';
+
+// Renvoie les composants (année, mois, jour, h, m, s) dans TZ
+function nowInBrussels() {
+  const parts = new Intl.DateTimeFormat('fr-BE', {
+    timeZone: TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (type) => parseInt(parts.find(p => p.type === type).value, 10);
+  return {
+    year: get('year'),
+    month: get('month'),
+    day: get('day'),
+    hour: get('hour') % 24, // parfois "24" en fin de journée
+    minute: get('minute'),
+    second: get('second'),
+  };
+}
+
+// Jour (en nombre) depuis une date-ancre — tout en "jours calendaires" de Bruxelles
+// On convertit (année, mois, jour) en un nombre de jours absolu (Julian-like) pour soustraire proprement.
+function toDayNumber(y, m, d) {
+  // m = 1..12
+  // Formule classique — convertit en nombre entier stable
+  const a = Math.floor((14 - m) / 12);
+  const yy = y + 4800 - a;
+  const mm = m + 12 * a - 3;
+  return d + Math.floor((153 * mm + 2) / 5) + 365 * yy
+         + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+}
+
+// Ancres
+const START = { y: 2026, m: 4,  d: 19 }; // 19 avril 2026
+const END   = { y: 2026, m: 8,  d: 31 }; // 31 août 2026
+
+const startDay = toDayNumber(START.y, START.m, START.d);
+const endDay   = toDayNumber(END.y,   END.m,   END.d);
+const totalDays = endDay - startDay;
+
+function computeProgress() {
+  const n = nowInBrussels();
+  const currentDay = toDayNumber(n.year, n.month, n.day);
+  const daysDone = Math.max(0, Math.min(totalDays, currentDay - startDay));
+  const daysLeft = totalDays - daysDone;
+
+  // Fraction du jour courant pour que la progress bar coule finement (pas de saut brutal)
+  const fractionOfDay = (n.hour * 3600 + n.minute * 60 + n.second) / 86400;
+  const elapsedFractional = Math.max(0, Math.min(totalDays, (currentDay - startDay) + fractionOfDay));
+  const pct = (elapsedFractional / totalDays) * 100;
+
+  // "Day N" du voyage : jour 1 = le jour de départ lui-même
+  const dayCount = Math.max(1, Math.min(totalDays + 1, daysDone + 1));
+
+  return { daysDone, daysLeft, pct, dayCount, time: n };
+}
+
+function padClock(n) { return String(n).padStart(2, '0'); }
+
+let firstRender = true;
+function updateTimeUI() {
+  const p = computeProgress();
+
+  document.getElementById('daysTotal').textContent = totalDays;
+  document.getElementById('daysDone').textContent = p.daysDone;
+  document.getElementById('pctLabel').textContent = p.pct.toFixed(1) + '%';
+  document.getElementById('dayCount').textContent = String(p.dayCount).padStart(3, '0');
+  document.querySelector('.side-marker-right').innerHTML =
+    '<span>●</span> &nbsp; ' + p.daysLeft + ' jours avant la fin';
+
+  document.getElementById('clock').textContent =
+    padClock(p.time.hour) + ':' + padClock(p.time.minute) + ':' + padClock(p.time.second);
+
+  // Progress bar — sur le premier rendu on laisse l'anim CSS prendre le temps depuis 0,
+  // ensuite on met à jour "live" sans re-déclencher la transition lente
+  const fill = document.getElementById('progressFill');
+  if (firstRender) {
+    setTimeout(() => {
+      fill.style.width = p.pct + '%';
+      // Après l'anim initiale, on bascule en mode "live" avec transition courte
+      setTimeout(() => fill.classList.add('live'), 1900);
+    }, 400);
+    firstRender = false;
+  } else {
+    fill.style.width = p.pct + '%';
+  }
+}
+
+updateTimeUI();
+setInterval(updateTimeUI, 1000);
+
+// =====================================================
+// STARFIELD BACKDROP
+// =====================================================
+const starCanvas = document.getElementById('starCanvas');
+const starCtx = starCanvas.getContext('2d');
+let stars = [];
+
+function initStars() {
+  starCanvas.width = window.innerWidth;
+  starCanvas.height = window.innerHeight;
+  stars = [];
+  const count = Math.floor((starCanvas.width * starCanvas.height) / 6000);
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * starCanvas.width,
+      y: Math.random() * starCanvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      alpha: Math.random() * 0.6 + 0.2,
+      twinkleSpeed: Math.random() * 0.015 + 0.003,
+      twinklePhase: Math.random() * Math.PI * 2,
+      tint: Math.random() > 0.7 ? 'mauve' : (Math.random() > 0.5 ? 'rose' : 'star'),
+    });
+  }
+}
+initStars();
+window.addEventListener('resize', initStars);
+
+function drawStars(t) {
+  starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+  for (const s of stars) {
+    const a = s.alpha * (0.6 + 0.4 * Math.sin(t * s.twinkleSpeed + s.twinklePhase));
+    let color;
+    if (s.tint === 'mauve') color = `rgba(181, 139, 255, ${a})`;
+    else if (s.tint === 'rose') color = `rgba(232, 159, 255, ${a * 0.85})`;
+    else color = `rgba(255, 240, 214, ${a})`;
+    starCtx.fillStyle = color;
+    starCtx.beginPath();
+    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    starCtx.fill();
+  }
+}
+
+// =====================================================
+// BUBBLES
+// =====================================================
+const canvas = document.getElementById('bubbleCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const DOMAINS = [
+  { key: 'rise',           label: 'Rise',                      tag: '01', accent: '#e89fff', weight: 1.3  }, // rose-mauve
+  { key: 'goals',          label: '8 Great Goals',             tag: '02', accent: '#b58bff', weight: 1.2  }, // mauve
+  { key: 'ai',             label: 'AI',                        tag: '03', accent: '#d4b5ff', weight: 0.9  }, // lilac
+  { key: 'tracking',       label: 'Tracking',                  tag: '04', accent: '#8b6dcc', weight: 0.95 }, // muted
+  { key: 'code42',         label: 'Code / 42',                 tag: '05', accent: '#b58bff', weight: 1.05 },
+  { key: 'present',        label: 'Moment Présent',            tag: '06', accent: '#d4b5ff', weight: 1.15 },
+  { key: 'noaddict',       label: 'No Addict',                 tag: '07', accent: '#e89fff', weight: 1.0  },
+];
+
+class Bubble {
+  constructor(data, i, total) {
+    this.key = data.key;
+    this.label = data.label;
+    this.tag = data.tag;
+    this.accent = data.accent;
+    this.weight = data.weight;
+
+    this.radius = this.computeRadius();
+
+    const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
+    const dist = Math.min(canvas.width, canvas.height) * 0.34;
+    this.x = canvas.width / 2 + Math.cos(angle) * dist;
+    this.y = canvas.height / 2 + Math.sin(angle) * dist;
+    this.homeX = this.x;
+    this.homeY = this.y;
+
+    this.vx = 0;
+    this.vy = 0;
+
+    this.isDragging = false;
+    this.dragOffsetX = 0;
+    this.dragOffsetY = 0;
+
+    this.hoverScale = 1;
+    this.floatPhase = Math.random() * Math.PI * 2;
+    this.floatAmp = 2 + Math.random() * 2;
+  }
+
+  computeRadius() {
+    const baseR = Math.min(canvas.width, canvas.height) * 0.088;
+    return Math.max(60, baseR) * this.weight;
+  }
+
+  update(t, isHovered, bubbles) {
+    if (this.isDragging) {
+      // Position follows cursor, no auto-motion
+      const targetX = mouseX + this.dragOffsetX;
+      const targetY = mouseY + this.dragOffsetY;
+      // Track velocity for throw
+      this.vx = targetX - this.x;
+      this.vy = targetY - this.y;
+      this.x = targetX;
+      this.y = targetY;
+    } else {
+      // Only move if it has velocity (been thrown) — otherwise stay still
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+
+      if (speed > 0.05) {
+        // Apply velocity with friction
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.97;
+        this.vy *= 0.97;
+
+        // Very gentle pull back to home (only after throw)
+        this.vx += (this.homeX - this.x) * 0.0008;
+        this.vy += (this.homeY - this.y) * 0.0008;
+
+        // Collision with others
+        for (const other of bubbles) {
+          if (other === this || other.isDragging) continue;
+          const ox = this.x - other.x;
+          const oy = this.y - other.y;
+          const od = Math.sqrt(ox * ox + oy * oy);
+          const minD = this.radius + other.radius + 4;
+          if (od < minD && od > 0) {
+            const overlap = (minD - od) / minD;
+            const push = overlap * 0.5;
+            this.vx += (ox / od) * push;
+            this.vy += (oy / od) * push;
+            // Transfer energy
+            other.vx -= (ox / od) * push * 0.5;
+            other.vy -= (oy / od) * push * 0.5;
+          }
+        }
+      } else {
+        // At rest — stop completely
+        this.vx = 0;
+        this.vy = 0;
+      }
+
+      // Subtle ambient float (tiny, only position offset — doesn't "bounce around")
+      // This is just a breathing feel, doesn't actually move the anchor
+    }
+
+    // Walls
+    const topPad = 90, botPad = 140, sidePad = 30;
+    if (this.x - this.radius < sidePad) { this.x = sidePad + this.radius; this.vx = Math.abs(this.vx) * 0.65; }
+    if (this.x + this.radius > canvas.width - sidePad) { this.x = canvas.width - sidePad - this.radius; this.vx = -Math.abs(this.vx) * 0.65; }
+    if (this.y - this.radius < topPad) { this.y = topPad + this.radius; this.vy = Math.abs(this.vy) * 0.65; }
+    if (this.y + this.radius > canvas.height - botPad) { this.y = canvas.height - botPad - this.radius; this.vy = -Math.abs(this.vy) * 0.65; }
+
+    // Hover scale (smooth)
+    const targetScale = isHovered ? 1.06 : 1;
+    this.hoverScale += (targetScale - this.hoverScale) * 0.18;
+
+    // Breathing float phase
+    this.floatPhase += 0.015;
+  }
+
+  draw(ctx, t) {
+    // Small breathing y-offset — purely visual, doesn't affect physics
+    const floatY = Math.sin(this.floatPhase) * this.floatAmp;
+    const drawX = this.x;
+    const drawY = this.y + (this.isDragging ? 0 : floatY);
+
+    const r = this.radius * this.hoverScale;
+
+    ctx.save();
+    ctx.translate(drawX, drawY);
+
+    // Outer glow (neon, soft)
+    const glowR = r * 1.8;
+    const glow = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, glowR);
+    glow.addColorStop(0, this.accent + '55');
+    glow.addColorStop(0.5, this.accent + '18');
+    glow.addColorStop(1, this.accent + '00');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner radial gradient body — gives depth like a planet/orb
+    const body = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
+    body.addColorStop(0, this.lightenAccent(this.accent, 0.35));
+    body.addColorStop(0.55, this.accent);
+    body.addColorStop(1, this.darkenAccent(this.accent, 0.5));
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Thin rim
+    ctx.strokeStyle = this.lightenAccent(this.accent, 0.4) + '99';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner ring (orbital feel)
+    ctx.strokeStyle = '#ffffff20';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Soft highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.28, -r * 0.38, r * 0.35, r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tag
+    ctx.fillStyle = 'rgba(10, 6, 24, 0.7)';
+    ctx.font = 'italic 400 11px "Fraunces", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('[ ' + this.tag + ' ]', 0, -r * 0.52);
+
+    // Label
+    ctx.fillStyle = '#0a0618';
+    const words = this.label.split(' ');
+    const lines = [];
+    let current = '';
+    const fontSize = Math.max(13, Math.min(20, r / 4.6));
+    const maxChars = Math.floor(r / (fontSize * 0.32));
+    for (const w of words) {
+      if ((current + ' ' + w).trim().length > maxChars && current) {
+        lines.push(current.trim());
+        current = w;
+      } else {
+        current += ' ' + w;
+      }
+    }
+    if (current) lines.push(current.trim());
+
+    ctx.font = `600 ${fontSize}px "Fraunces", serif`;
+    const lh = fontSize * 1.15;
+    const startY = -((lines.length - 1) * lh) / 2 + 3;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, 0, startY + i * lh);
+    });
+
+    // Bottom dot
+    ctx.fillStyle = 'rgba(10, 6, 24, 0.4)';
+    ctx.beginPath();
+    ctx.arc(0, r * 0.6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  lightenAccent(hex, amount) {
+    const c = this.hexToRgb(hex);
+    return `rgb(${Math.min(255, c.r + (255 - c.r) * amount)}, ${Math.min(255, c.g + (255 - c.g) * amount)}, ${Math.min(255, c.b + (255 - c.b) * amount)})`;
+  }
+  darkenAccent(hex, amount) {
+    const c = this.hexToRgb(hex);
+    return `rgb(${c.r * (1 - amount)}, ${c.g * (1 - amount)}, ${c.b * (1 - amount)})`;
+  }
+  hexToRgb(hex) {
+    const h = hex.replace('#', '');
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16),
+    };
+  }
+
+  contains(px, py) {
+    const dx = px - this.x;
+    const dy = py - this.y;
+    const r = this.radius * this.hoverScale;
+    return (dx * dx + dy * dy) <= r * r;
+  }
+}
+
+const bubbles = DOMAINS.map((d, i) => new Bubble(d, i, DOMAINS.length));
+
+// =====================================================
+// DRAG / CLICK LOGIC
+// =====================================================
+let draggedBubble = null;
+let dragStartTime = 0;
+let dragStartX = 0, dragStartY = 0;
+let hasMoved = false;
+
+// Velocity tracking for realistic throw
+let lastMouseX = mouseX, lastMouseY = mouseY;
+let mouseVX = 0, mouseVY = 0;
+
+window.addEventListener('mousemove', (e) => {
+  mouseVX = e.clientX - lastMouseX;
+  mouseVY = e.clientY - lastMouseY;
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+
+  if (draggedBubble) {
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    if (Math.sqrt(dx*dx + dy*dy) > 5) hasMoved = true;
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  // Iterate from top-most (last drawn) to bottom
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    if (bubbles[i].contains(e.clientX, e.clientY)) {
+      draggedBubble = bubbles[i];
+      draggedBubble.isDragging = true;
+      draggedBubble.dragOffsetX = draggedBubble.x - e.clientX;
+      draggedBubble.dragOffsetY = draggedBubble.y - e.clientY;
+      dragStartTime = Date.now();
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      hasMoved = false;
+      cursor.classList.add('grabbing');
+      // Bring to front for drawing
+      bubbles.splice(i, 1);
+      bubbles.push(draggedBubble);
+      break;
+    }
+  }
+});
+
+window.addEventListener('mouseup', (e) => {
+  if (draggedBubble) {
+    const dt = Date.now() - dragStartTime;
+    draggedBubble.isDragging = false;
+
+    // Throw: use recent mouse velocity
+    if (hasMoved) {
+      draggedBubble.vx = mouseVX * 1.1;
+      draggedBubble.vy = mouseVY * 1.1;
+    } else {
+      // It was a click — open notes
+      if (dt < 300) {
+        openNotes(draggedBubble);
+      }
+      draggedBubble.vx = 0;
+      draggedBubble.vy = 0;
+    }
+
+    draggedBubble = null;
+    cursor.classList.remove('grabbing');
+  }
+});
+
+// Hover feedback
+window.addEventListener('mousemove', (e) => {
+  let over = false;
+  for (const b of bubbles) {
+    if (b.contains(e.clientX, e.clientY)) { over = true; break; }
+  }
+  if (over) cursor.classList.add('hover');
+  else cursor.classList.remove('hover');
+});
+
+// =====================================================
+// NOTES PANEL
+// =====================================================
+const notesOverlay = document.getElementById('notesOverlay');
+const notesTag = document.getElementById('notesTag');
+const notesTitle = document.getElementById('notesTitle');
+const notesSub = document.getElementById('notesSub');
+const notesTextarea = document.getElementById('notesTextarea');
+const notesClose = document.getElementById('notesClose');
+const savedIndicator = document.getElementById('savedIndicator');
+
+let currentBubble = null;
+let saveTimeout = null;
+
+function openNotes(bubble) {
+  currentBubble = bubble;
+  notesTag.textContent = `[ ${bubble.tag} ] — Domaine`;
+  notesTitle.innerHTML = `<b>${bubble.label}</b>`;
+  notesSub.textContent = 'Notes, idées, prochaines actions';
+
+  // Load saved notes
+  const saved = loadNote(bubble.key);
+  notesTextarea.value = saved || '';
+
+  notesOverlay.classList.add('active');
+  setTimeout(() => notesTextarea.focus(), 280);
+}
+
+function closeNotes() {
+  notesOverlay.classList.remove('active');
+  currentBubble = null;
+}
+
+notesClose.addEventListener('click', closeNotes);
+notesOverlay.addEventListener('click', (e) => {
+  if (e.target === notesOverlay) closeNotes();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && currentBubble) closeNotes();
+});
+
+notesTextarea.addEventListener('input', () => {
+  if (!currentBubble) return;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveNote(currentBubble.key, notesTextarea.value);
+    savedIndicator.classList.add('show');
+    setTimeout(() => savedIndicator.classList.remove('show'), 1200);
+  }, 400);
+});
+
+// Storage (in-memory fallback for environments without localStorage)
+const memoryStore = {};
+function saveNote(key, content) {
+  try {
+    localStorage.setItem('sfa_note_' + key, content);
+  } catch (e) {
+    memoryStore[key] = content;
+  }
+}
+function loadNote(key) {
+  try {
+    return localStorage.getItem('sfa_note_' + key);
+  } catch (e) {
+    return memoryStore[key] || '';
+  }
+}
+
+// =====================================================
+// MAIN LOOP
+// =====================================================
+function loop(t) {
+  drawStars(t);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Find hovered
+  let hoveredIndex = -1;
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    if (bubbles[i].contains(mouseX, mouseY)) {
+      hoveredIndex = i;
+      break;
+    }
+  }
+
+  bubbles.forEach((b, i) => {
+    b.update(t, i === hoveredIndex, bubbles);
+    b.draw(ctx, t);
+  });
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Resize recompute home positions
+window.addEventListener('resize', () => {
+  resize();
+  bubbles.forEach((b, i) => {
+    const angle = (i / bubbles.length) * Math.PI * 2 - Math.PI / 2;
+    const dist = Math.min(canvas.width, canvas.height) * 0.34;
+    b.homeX = canvas.width / 2 + Math.cos(angle) * dist;
+    b.homeY = canvas.height / 2 + Math.sin(angle) * dist;
+    b.radius = b.computeRadius();
+  });
+});
+</script>
+
+</body>
+</html>
