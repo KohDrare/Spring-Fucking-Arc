@@ -1,0 +1,2748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon arc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Deep space mauve */
+    --bg-0:  #0a0618;   /* near black, cold violet */
+    --bg-1:  #1a0f35;   /* deep mauve */
+    --bg-2:  #2a1856;   /* mid mauve */
+    --ink:   #e8dffb;   /* pale lavender ink */
+    --ink-dim: #7d6fa8;
+    --ink-faint: #3d2f5c;
+    --mauve:   #b58bff;   /* bright mauve — the accent */
+    --mauve-soft: #8b6dcc;
+    --lilac:   #d4b5ff;   /* pale bright lilac */
+    --rose:    #e89fff;   /* pink-mauve highlight */
+    --star:    #fff0d6;   /* warm star white */
+    --line: rgba(var(--ink-rgb), 0.1);
+    /* RGB components (so we can do rgba(var(--mauve-rgb), .X)) */
+    --mauve-rgb: 181, 139, 255;
+    --rose-rgb: 232, 159, 255;
+    --lilac-rgb: 212, 181, 255;
+    --ink-rgb: 232, 223, 251;
+    --bg-1-rgb: 26, 15, 53;
+    --bg-2-rgb: 42, 24, 86;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-0);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: none;
+  }
+
+  /* ==== DEEP SPACE BACKDROP ==== */
+  .space-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 30%, rgba(var(--mauve-rgb), 0.18), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 80% 70%, rgba(var(--rose-rgb), 0.12), transparent 55%),
+      radial-gradient(ellipse 100% 80% at 50% 110%, rgba(42, 24, 86, 0.6), transparent 65%),
+      radial-gradient(ellipse 60% 40% at 50% -10%, rgba(26, 15, 53, 0.7), transparent 50%),
+      linear-gradient(180deg, #0a0618 0%, #120828 50%, #0a0618 100%);
+  }
+  .space-bg canvas { position: absolute; inset: 0; }
+
+  /* Grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.09;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Vignette */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.55) 100%);
+  }
+
+  /* ==== CURSOR ==== */
+  .cursor {
+    position: fixed;
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--lilac);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.18s ease, height 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    mix-blend-mode: screen;
+  }
+  .cursor.hover {
+    width: 46px; height: 46px;
+    border-color: var(--rose);
+  }
+  .cursor.grabbing {
+    width: 14px; height: 14px;
+    background: var(--rose);
+    border-color: var(--rose);
+  }
+  .cursor-dot {
+    position: fixed;
+    width: 4px; height: 4px;
+    background: var(--lilac);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ==== TOP BAR ==== */
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 22px 34px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    z-index: 50;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(to bottom, rgba(10, 6, 24, 0.9) 50%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .top-bar .left em {
+    color: var(--rose);
+    font-style: normal;
+  }
+  .top-bar .right { display: flex; gap: 28px; }
+  .top-bar .right b {
+    color: var(--ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .top-bar .clock { color: var(--mauve); font-variant-numeric: tabular-nums; }
+
+  .view-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .view-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 16px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    cursor: none;
+    border-radius: 20px;
+    transition: all 0.25s ease;
+  }
+  .view-toggle-btn:hover {
+    color: var(--lilac);
+  }
+  .view-toggle-btn.active {
+    background: rgba(var(--mauve-rgb), 0.18);
+    color: var(--lilac);
+    box-shadow: inset 0 0 0 1px rgba(var(--mauve-rgb), 0.35);
+  }
+
+  /* ==== CALENDAR VIEW ==== */
+  .calendar-view {
+    position: fixed;
+    inset: 90px 80px 130px 80px;
+    z-index: 5;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    overflow: visible;
+  }
+  .calendar-view.active {
+    display: flex;
+  }
+  .calendar-header {
+    width: 100%;
+    max-width: 920px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .calendar-meta {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-style: italic;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .calendar-stat b {
+    color: var(--lilac);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .granularity-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .granularity-btn {
+    background: transparent;
+    border: none;
+    padding: 5px 14px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    cursor: none;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+  }
+  .granularity-btn:hover { color: var(--lilac); }
+  .granularity-btn.active {
+    background: rgba(var(--mauve-rgb), 0.15);
+    color: var(--lilac);
+    box-shadow: inset 0 0 0 1px rgba(var(--mauve-rgb), 0.3);
+  }
+
+  .calendar-grid-wrap {
+    flex: 1;
+    width: 100%;
+    max-width: 920px;
+    overflow-y: auto;
+    overflow-x: visible;
+    padding: 50px 16px 30px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--mauve-rgb), 0.25) transparent;
+  }
+  .calendar-grid-wrap::-webkit-scrollbar { width: 6px; }
+  .calendar-grid-wrap::-webkit-scrollbar-track { background: transparent; }
+  .calendar-grid-wrap::-webkit-scrollbar-thumb {
+    background: rgba(var(--mauve-rgb), 0.25);
+    border-radius: 3px;
+  }
+
+  .calendar-grid {
+    display: grid;
+    gap: 14px;
+    place-items: center;
+    width: 100%;
+  }
+  /* The actual columns count is set dynamically via inline style */
+
+  .cal-bubble {
+    width: var(--bubble-size, 28px);
+    height: var(--bubble-size, 28px);
+    border-radius: 50%;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    cursor: none;
+  }
+  .cal-bubble:hover {
+    transform: scale(1.18);
+    z-index: 5;
+  }
+
+  /* PAST: filled gradient like main bubbles */
+  .cal-bubble.past {
+    background: radial-gradient(circle at 30% 30%,
+      rgba(var(--lilac-rgb), 0.95),
+      rgba(var(--mauve-rgb), 0.85) 60%,
+      rgba(var(--mauve-rgb), 0.4));
+    box-shadow:
+      0 0 8px rgba(var(--mauve-rgb), 0.35),
+      inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  }
+
+  /* NOW: bright pulsing ring */
+  .cal-bubble.now {
+    background: radial-gradient(circle at 30% 30%,
+      rgba(255, 240, 220, 1),
+      rgba(var(--rose-rgb), 0.95) 60%,
+      rgba(var(--rose-rgb), 0.5));
+    box-shadow:
+      0 0 16px rgba(var(--rose-rgb), 0.7),
+      0 0 32px rgba(var(--rose-rgb), 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    animation: cal-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes cal-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 16px rgba(var(--rose-rgb), 0.7),
+        0 0 32px rgba(var(--rose-rgb), 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+      box-shadow:
+        0 0 24px rgba(var(--rose-rgb), 0.9),
+        0 0 48px rgba(var(--rose-rgb), 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  /* FUTURE: hollow with very faint dotted border */
+  .cal-bubble.future {
+    background: rgba(var(--mauve-rgb), 0.04);
+    border: 1px dashed rgba(var(--mauve-rgb), 0.2);
+    box-shadow: inset 0 0 4px rgba(var(--mauve-rgb), 0.05);
+  }
+
+  /* TOOLTIP */
+  .cal-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: rgba(10, 6, 24, 0.95);
+    border: 1px solid rgba(var(--mauve-rgb), 0.3);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-style: italic;
+    letter-spacing: 0.04em;
+    padding: 6px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 10;
+    backdrop-filter: blur(6px);
+  }
+  .cal-bubble:hover .cal-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(2px);
+  }
+
+  .calendar-legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 8px; }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+  }
+  .legend-dot.legend-past {
+    background: radial-gradient(circle at 30% 30%, rgba(var(--lilac-rgb), 0.95), rgba(var(--mauve-rgb), 0.7));
+  }
+  .legend-dot.legend-now {
+    background: radial-gradient(circle at 30% 30%, rgba(255, 240, 220, 1), rgba(var(--rose-rgb), 0.85));
+    box-shadow: 0 0 6px rgba(var(--rose-rgb), 0.5);
+  }
+  .legend-dot.legend-future {
+    background: rgba(var(--mauve-rgb), 0.05);
+    border: 1px dashed rgba(var(--mauve-rgb), 0.3);
+  }
+
+  /* Hide bubble canvas + add-button when in calendar view */
+  body.view-calendar .bubble-canvas { display: none; }
+  body.view-calendar .add-btn { display: none; }
+  body.view-calendar .title-wrap { display: none; }
+
+  /* ==== TITLE (background layer) ==== */
+  .title-wrap {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;  /* BEHIND bubbles (z-index 3) */
+    pointer-events: none;
+    user-select: none;
+    width: 100%;
+  }
+  .title-pre {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.4em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+  .title-pre span { color: var(--mauve-soft); opacity: 0.6; }
+  .title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(60px, 13vw, 230px);
+    line-height: 0.86;
+    letter-spacing: -0.04em;
+    color: var(--ink-faint);
+    opacity: 0.85;
+  }
+  .title .fucking {
+    font-style: italic;
+    font-weight: 900;
+    color: var(--mauve-soft);
+    display: inline-block;
+    transform: translateY(-6px) rotate(-2.5deg);
+    opacity: 0.7;
+  }
+  .title .arc {
+    font-weight: 900;
+    font-style: normal;
+    letter-spacing: -0.05em;
+    color: var(--ink-faint);
+  }
+  .title-sub {
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.32em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-top: 32px;
+  }
+
+  /* ==== PROGRESS ==== */
+  .progress-section {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 22px 34px 26px;
+    background: linear-gradient(to top, rgba(10, 6, 24, 0.92) 50%, transparent);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+    border-top: 1px solid var(--line);
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  .progress-meta .label { font-style: italic; }
+  .progress-meta .pct {
+    color: var(--lilac);
+    font-weight: 600;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+  }
+  .progress-meta .days b {
+    color: var(--ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .progress-track {
+    height: 2px;
+    background: var(--line);
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--mauve), var(--rose));
+    width: 0%;
+    transition: width 1.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    box-shadow: 0 0 24px rgba(var(--mauve-rgb), 0.6);
+  }
+  .progress-fill.live {
+    transition: width 1s linear;
+  }
+  .progress-fill::after {
+    content: "";
+    position: absolute;
+    right: -5px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background: var(--rose);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--rose), 0 0 40px var(--mauve);
+  }
+  .progress-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    font-style: italic;
+  }
+  .progress-markers .now {
+    color: var(--rose);
+    font-weight: 500;
+  }
+  .data-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 18px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .data-actions button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: 'Fraunces', serif;
+    font-size: 9px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.22em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .data-actions button:hover {
+    color: var(--lilac);
+  }
+  .data-actions .sep {
+    color: var(--ink-faint);
+    font-family: 'Fraunces', serif;
+    font-size: 9px;
+  }
+
+  /* ==== SIDE MARKERS ==== */
+  .side-marker {
+    position: fixed;
+    left: 34px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: left center;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.4em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .side-marker-right {
+    position: fixed;
+    right: 34px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: right center;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.4em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .side-marker-right span { color: var(--mauve); }
+
+  /* ==== BUBBLE CANVAS (in front of title) ==== */
+  canvas.bubble-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+  }
+
+  /* ==== HINT ==== */
+  .hint {
+    position: fixed;
+    bottom: 92px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: 0.3em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    z-index: 40;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  .hint span { color: var(--mauve); }
+
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* ==== NOTES PANEL ==== */
+  .notes-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    cursor: none;
+  }
+  .notes-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .notes-panel {
+    width: min(620px, 92vw);
+    max-height: 80vh;
+    background:
+      linear-gradient(160deg, rgba(var(--mauve-rgb), 0.06), rgba(var(--mauve-rgb), 0.02)),
+      linear-gradient(160deg, #18181f, #11111a);
+    border: 1px solid rgba(var(--mauve-rgb), 0.2);
+    border-radius: 4px;
+    padding: 32px 36px 28px;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.5),
+      0 0 60px rgba(var(--mauve-rgb), 0.1),
+      inset 0 1px 0 rgba(var(--lilac-rgb), 0.08);
+    transform: scale(0.94) translateY(10px);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+  }
+  .notes-overlay.active .notes-panel {
+    transform: scale(1) translateY(0);
+  }
+  .notes-tag {
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.35em;
+    color: var(--mauve);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .notes-title {
+    font-family: 'Fraunces', serif;
+    font-size: 44px;
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .notes-title b {
+    font-style: normal;
+    font-weight: 900;
+    color: var(--lilac);
+  }
+  .notes-importance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .notes-importance-label {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-style: italic;
+    letter-spacing: 0.2em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .importance-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .importance-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 7px 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.2s ease;
+    min-width: 36px;
+    justify-content: center;
+  }
+  .importance-btn:hover {
+    border-color: var(--mauve);
+    background: rgba(181, 139, 255, 0.08);
+  }
+  .importance-btn.active {
+    border-color: var(--mauve);
+    background: rgba(181, 139, 255, 0.18);
+    box-shadow: 0 0 12px rgba(181, 139, 255, 0.25);
+  }
+  .importance-btn .dot {
+    background: var(--ink-dim);
+    border-radius: 50%;
+    transition: background 0.2s ease;
+  }
+  .importance-btn:hover .dot, .importance-btn.active .dot {
+    background: var(--lilac);
+  }
+  .importance-btn .dot-1 { width: 4px; height: 4px; }
+  .importance-btn .dot-2 { width: 6px; height: 6px; }
+  .importance-btn .dot-3 { width: 8px; height: 8px; }
+  .notes-sub {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-style: italic;
+    letter-spacing: 0.2em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .notes-textarea {
+    flex: 1;
+    min-height: 260px;
+    background: rgba(10, 6, 24, 0.5);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 18px 20px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--ink);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .notes-textarea::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .notes-textarea:focus {
+    border-color: rgba(var(--mauve-rgb), 0.5);
+  }
+  .notes-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.22em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .notes-footer .saved { color: var(--mauve); opacity: 0; transition: opacity 0.3s; }
+  .notes-footer .saved.show { opacity: 1; }
+  .notes-close {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 8px 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+  .notes-close:hover {
+    color: var(--ink);
+    border-color: var(--mauve);
+  }
+
+  /* EDITABLE TITLE INPUT */
+  .notes-title-input {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Fraunces', serif;
+    font-size: 44px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--lilac);
+    margin-bottom: 4px;
+    padding: 2px 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .notes-title-input::placeholder {
+    color: var(--ink-faint);
+    font-weight: 400;
+    font-style: italic;
+    opacity: 0.8;
+  }
+  .notes-title-input:focus {
+    border-bottom-color: rgba(var(--mauve-rgb), 0.35);
+  }
+
+  /* DELETE BUTTON */
+  .notes-delete {
+    background: transparent;
+    border: 1px solid rgba(var(--rose-rgb), 0.25);
+    color: rgba(var(--rose-rgb), 0.75);
+    padding: 8px 16px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+  .notes-delete:hover {
+    color: #ff9ab0;
+    border-color: rgba(255, 154, 176, 0.6);
+    background: rgba(255, 154, 176, 0.06);
+  }
+  .notes-delete.confirming {
+    color: #ff9ab0;
+    border-color: #ff9ab0;
+    background: rgba(255, 154, 176, 0.12);
+  }
+
+  /* ADD BUBBLE BUTTON */
+  /* ==== SETTINGS BUTTON & PANEL ==== */
+  .settings-btn {
+    position: fixed;
+    bottom: 130px;
+    right: 34px;
+    z-index: 60;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(var(--bg-1-rgb), 0.85);
+    border: 1px solid rgba(var(--mauve-rgb), 0.35);
+    color: var(--lilac);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: none;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(var(--mauve-rgb), 0.1);
+    transition: all 0.25s ease;
+  }
+  .settings-btn:hover {
+    transform: scale(1.08);
+    border-color: var(--mauve);
+    color: var(--rose);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.4), 0 0 28px rgba(var(--rose-rgb), 0.25);
+  }
+  .settings-btn svg {
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .settings-btn.open svg {
+    transform: rotate(90deg);
+  }
+
+  .settings-panel {
+    position: fixed;
+    bottom: 195px;
+    right: 34px;
+    z-index: 70;
+    width: min(360px, calc(100vw - 60px));
+    max-height: calc(100vh - 230px);
+    overflow-y: auto;
+    background:
+      linear-gradient(160deg, rgba(var(--mauve-rgb), 0.06), rgba(var(--mauve-rgb), 0.02)),
+      linear-gradient(160deg, #18181f, #11111a);
+    border: 1px solid rgba(var(--mauve-rgb), 0.2);
+    border-radius: 8px;
+    padding: 22px 22px 18px;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.55),
+      0 0 60px rgba(var(--mauve-rgb), 0.12),
+      inset 0 1px 0 rgba(var(--lilac-rgb), 0.08);
+    transform: translateY(8px) scale(0.96);
+    transform-origin: bottom right;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    backdrop-filter: blur(10px);
+  }
+  .settings-panel.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+  .settings-panel::-webkit-scrollbar { width: 6px; }
+  .settings-panel::-webkit-scrollbar-track { background: transparent; }
+  .settings-panel::-webkit-scrollbar-thumb { background: rgba(var(--mauve-rgb), 0.2); border-radius: 3px; }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .settings-title {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .settings-close {
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: none;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .settings-close:hover {
+    color: var(--ink);
+    background: rgba(var(--mauve-rgb), 0.1);
+  }
+
+  .settings-add-bubble {
+    width: 100%;
+    background: rgba(var(--mauve-rgb), 0.08);
+    border: 1px solid rgba(var(--mauve-rgb), 0.25);
+    color: var(--lilac);
+    border-radius: 6px;
+    padding: 11px 14px;
+    font-family: 'Fraunces', serif;
+    font-size: 12px;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    cursor: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+    margin-bottom: 18px;
+  }
+  .settings-add-bubble:hover:not(:disabled) {
+    background: rgba(var(--mauve-rgb), 0.16);
+    border-color: var(--mauve);
+    color: var(--rose);
+  }
+  .settings-add-bubble:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .settings-add-bubble-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .settings-add-bubble-count {
+    font-size: 10px;
+    color: var(--ink-dim);
+    font-style: italic;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .settings-field {
+    margin-bottom: 16px;
+  }
+  .settings-field-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .settings-field-row .settings-field {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  .settings-label {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+  .settings-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .settings-input:focus {
+    border-color: rgba(var(--mauve-rgb), 0.5);
+  }
+  .settings-input[type="date"] {
+    color-scheme: dark;
+    font-style: italic;
+  }
+  .settings-hint {
+    margin-top: 5px;
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+
+  .theme-swatches {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  .theme-swatch {
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: none;
+    transition: transform 0.18s, border-color 0.2s, box-shadow 0.2s;
+    background-clip: padding-box;
+    position: relative;
+  }
+  .theme-swatch:hover {
+    transform: scale(1.12);
+  }
+  .theme-swatch.active {
+    border-color: var(--ink);
+    box-shadow: 0 0 12px rgba(var(--ink-rgb), 0.25);
+  }
+
+  .settings-footer {
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-footer .data-actions {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  .settings-footer .data-actions button {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+  }
+  .settings-reset {
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    font-family: 'Fraunces', serif;
+    font-size: 10px;
+    font-style: italic;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: none;
+    padding: 4px 6px;
+    transition: color 0.2s;
+  }
+  .settings-reset:hover {
+    color: var(--rose);
+  }
+  .settings-reset.confirming {
+    color: var(--rose);
+  }
+
+  @media (max-width: 768px) {
+    .title { font-size: 58px; }
+    .side-marker, .side-marker-right { display: none; }
+    html, body { cursor: auto; }
+    .cursor, .cursor-dot { display: none; }
+    .notes-overlay { cursor: auto; }
+    .notes-close, .notes-delete, .settings-btn, .settings-close, .settings-add-bubble, .settings-reset, .theme-swatch { cursor: pointer; }
+    .notes-panel { padding: 24px; }
+    .notes-title-input { font-size: 30px; }
+    .top-bar { padding: 16px 20px; font-size: 10px; letter-spacing: 0.15em; }
+    .top-bar .right { gap: 14px; }
+    .progress-section { padding: 16px 20px 20px; }
+    .settings-btn { bottom: 110px; right: 18px; width: 42px; height: 42px; }
+    .settings-panel { bottom: 168px; right: 18px; padding: 18px 16px 14px; }
+    .settings-field-row { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="space-bg">
+  <canvas id="starCanvas"></canvas>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<div class="top-bar">
+  <div class="left"><em>◈</em> &nbsp; <span id="topBarLabel">Mon arc</span></div>
+  <div class="view-toggle" id="viewToggle">
+    <button class="view-toggle-btn active" data-view="bubbles">bulles</button>
+    <button class="view-toggle-btn" data-view="calendar">calendrier</button>
+  </div>
+  <div class="right">
+    <div>Day <b id="dayCount">001</b></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<div class="side-marker" id="sideMarkerLeft">19.04.2026 — 31.08.2026</div>
+<div class="side-marker-right"><span>●</span> &nbsp; 135 jours avant la fin</div>
+
+<div class="title-wrap">
+  <div class="title-pre"><span>◆</span> &nbsp; <span id="titlePre"></span> &nbsp; <span>◆</span></div>
+  <h1 class="title" id="titleMain"></h1>
+  <div class="title-sub" id="titleSub"></div>
+</div>
+
+<canvas class="bubble-canvas" id="bubbleCanvas"></canvas>
+
+<!-- CALENDAR VIEW (hidden by default) -->
+<div class="calendar-view" id="calendarView">
+  <div class="calendar-header">
+    <div class="calendar-meta">
+      <span class="calendar-stat" id="calendarStat">— jours écoulés —</span>
+    </div>
+    <div class="granularity-toggle">
+      <button class="granularity-btn active" data-granularity="day">jours</button>
+      <button class="granularity-btn" data-granularity="week">semaines</button>
+      <button class="granularity-btn" data-granularity="month">mois</button>
+    </div>
+  </div>
+  <div class="calendar-grid-wrap">
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+  <div class="calendar-legend">
+    <span class="legend-item"><span class="legend-dot legend-past"></span> écoulé</span>
+    <span class="legend-item"><span class="legend-dot legend-now"></span> aujourd'hui</span>
+    <span class="legend-item"><span class="legend-dot legend-future"></span> à venir</span>
+  </div>
+</div>
+
+<div class="progress-section">
+  <div class="progress-meta">
+    <div class="label">Progression de l'Arc</div>
+    <div class="pct" id="pctLabel">0.0%</div>
+    <div class="days"><b id="daysDone">0</b> &nbsp;/&nbsp; <b id="daysTotal">134</b>&nbsp; jours</div>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="progress-markers" id="progressMarkers">
+    <span>19 avril — départ</span>
+    <span>mai</span>
+    <span>juin</span>
+    <span>juillet</span>
+    <span class="now">31 août — fin</span>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept=".json,application/json" style="display:none"/>
+
+<!-- SETTINGS BUTTON -->
+<button class="settings-btn" id="settingsBtn" title="Réglages">
+  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settingsPanel" onclick="event.stopPropagation()">
+  <div class="settings-header">
+    <span class="settings-title">Réglages</span>
+    <button class="settings-close" id="settingsClose" aria-label="Fermer">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ADD BUBBLE -->
+  <button class="settings-add-bubble" id="addBubbleBtn">
+    <span class="settings-add-bubble-label">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Ajouter une bulle
+    </span>
+    <span class="settings-add-bubble-count" id="addBubbleCount">8 / 8</span>
+  </button>
+
+  <!-- TITLE -->
+  <div class="settings-field">
+    <label class="settings-label">Titre</label>
+    <input type="text" class="settings-input" id="titleInput" maxlength="40" placeholder="Mon projet"/>
+    <div class="settings-hint">Le mot du milieu sera mis en avant.</div>
+  </div>
+
+  <!-- SUBTITLES -->
+  <div class="settings-field">
+    <label class="settings-label">Texte au-dessus du titre</label>
+    <input type="text" class="settings-input" id="preInput" maxlength="60" placeholder="ex : période / saison"/>
+  </div>
+  <div class="settings-field">
+    <label class="settings-label">Texte en-dessous du titre</label>
+    <input type="text" class="settings-input" id="subInput" maxlength="60" placeholder="ex : objectifs / intentions"/>
+  </div>
+
+  <!-- DATES -->
+  <div class="settings-field-row">
+    <div class="settings-field">
+      <label class="settings-label">Date de début</label>
+      <input type="date" class="settings-input" id="startDateInput"/>
+    </div>
+    <div class="settings-field">
+      <label class="settings-label">Date de fin</label>
+      <input type="date" class="settings-input" id="endDateInput"/>
+    </div>
+  </div>
+
+  <!-- COLOR THEME -->
+  <div class="settings-field">
+    <label class="settings-label">Couleur du thème</label>
+    <div class="theme-swatches" id="themeSwatches"></div>
+  </div>
+
+  <div class="settings-footer">
+    <div class="data-actions">
+      <button id="exportBtn" title="Télécharger ta config et tes notes dans un fichier JSON">exporter</button>
+      <span class="sep">·</span>
+      <button id="importBtn" title="Restaurer depuis un fichier JSON précédemment exporté">importer</button>
+    </div>
+    <button class="settings-reset" id="settingsReset" title="Réinitialiser les valeurs par défaut">réinitialiser</button>
+  </div>
+</div>
+
+<!-- NOTES MODAL -->
+<div class="notes-overlay" id="notesOverlay">
+  <div class="notes-panel" onclick="event.stopPropagation()">
+    <div class="notes-tag" id="notesTag">[ 00 ] — Domaine</div>
+    <input class="notes-title-input" id="notesTitleInput" type="text" placeholder="Donne un titre à cette bulle…" maxlength="40"/>
+    <div class="notes-importance">
+      <span class="notes-importance-label">Importance</span>
+      <div class="importance-dots">
+        <button class="importance-btn" data-importance="low" title="Pas important">
+          <span class="dot dot-1"></span>
+        </button>
+        <button class="importance-btn" data-importance="mid" title="Moyennement important">
+          <span class="dot dot-1"></span><span class="dot dot-2"></span>
+        </button>
+        <button class="importance-btn" data-importance="high" title="Important">
+          <span class="dot dot-1"></span><span class="dot dot-2"></span><span class="dot dot-3"></span>
+        </button>
+      </div>
+    </div>
+    <div class="notes-sub" id="notesSub">Notes, idées, prochaines actions</div>
+    <textarea class="notes-textarea" id="notesTextarea" placeholder="Écris ici. Tout est sauvegardé automatiquement."></textarea>
+    <div class="notes-footer">
+      <button class="notes-delete" id="notesDelete">supprimer</button>
+      <div style="flex:1"></div>
+      <div class="saved" id="savedIndicator">✓ sauvegardé</div>
+      <button class="notes-close" id="notesClose">fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// CURSOR
+// =====================================================
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursorDot');
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let cursorX = mouseX, cursorY = mouseY;
+
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  cursorDot.style.left = mouseX + 'px';
+  cursorDot.style.top = mouseY + 'px';
+});
+
+function animateCursor() {
+  cursorX += (mouseX - cursorX) * 0.18;
+  cursorY += (mouseY - cursorY) * 0.18;
+  cursor.style.left = cursorX + 'px';
+  cursor.style.top = cursorY + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// =====================================================
+// DATES — Timezone Europe/Brussels (gère CET/CEST auto)
+// =====================================================
+const TZ = 'Europe/Brussels';
+
+// Renvoie les composants (année, mois, jour, h, m, s) dans TZ
+function nowInBrussels() {
+  const parts = new Intl.DateTimeFormat('fr-BE', {
+    timeZone: TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (type) => parseInt(parts.find(p => p.type === type).value, 10);
+  return {
+    year: get('year'),
+    month: get('month'),
+    day: get('day'),
+    hour: get('hour') % 24, // parfois "24" en fin de journée
+    minute: get('minute'),
+    second: get('second'),
+  };
+}
+
+// Jour (en nombre) depuis une date-ancre — tout en "jours calendaires" de Bruxelles
+// On convertit (année, mois, jour) en un nombre de jours absolu (Julian-like) pour soustraire proprement.
+function toDayNumber(y, m, d) {
+  // m = 1..12
+  // Formule classique — convertit en nombre entier stable
+  const a = Math.floor((14 - m) / 12);
+  const yy = y + 4800 - a;
+  const mm = m + 12 * a - 3;
+  return d + Math.floor((153 * mm + 2) / 5) + 365 * yy
+         + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+}
+
+// Ancres — peuvent être modifiées depuis le panneau de réglages
+let START = { y: 2026, m: 4,  d: 19 }; // 19 avril 2026
+let END   = { y: 2026, m: 8,  d: 31 }; // 31 août 2026
+
+let startDay = toDayNumber(START.y, START.m, START.d);
+let endDay   = toDayNumber(END.y,   END.m,   END.d);
+let totalDays = endDay - startDay;
+
+function recomputeDateAnchors() {
+  startDay = toDayNumber(START.y, START.m, START.d);
+  endDay   = toDayNumber(END.y,   END.m,   END.d);
+  totalDays = Math.max(1, endDay - startDay);
+}
+
+function computeProgress() {
+  const n = nowInBrussels();
+  const currentDay = toDayNumber(n.year, n.month, n.day);
+  const daysDone = Math.max(0, Math.min(totalDays, currentDay - startDay));
+  const daysLeft = totalDays - daysDone;
+
+  // Fraction du jour courant pour que la progress bar coule finement (pas de saut brutal)
+  const fractionOfDay = (n.hour * 3600 + n.minute * 60 + n.second) / 86400;
+  const elapsedFractional = Math.max(0, Math.min(totalDays, (currentDay - startDay) + fractionOfDay));
+  const pct = (elapsedFractional / totalDays) * 100;
+
+  // "Day N" du voyage : jour 1 = le jour de départ lui-même
+  const dayCount = Math.max(1, Math.min(totalDays + 1, daysDone + 1));
+
+  return { daysDone, daysLeft, pct, dayCount, time: n };
+}
+
+function padClock(n) { return String(n).padStart(2, '0'); }
+
+let firstRender = true;
+function updateTimeUI() {
+  const p = computeProgress();
+
+  document.getElementById('daysTotal').textContent = totalDays;
+  document.getElementById('daysDone').textContent = p.daysDone;
+  document.getElementById('pctLabel').textContent = p.pct.toFixed(1) + '%';
+  document.getElementById('dayCount').textContent = String(p.daysDone).padStart(3, '0');
+  document.querySelector('.side-marker-right').innerHTML =
+    '<span>●</span> &nbsp; ' + p.daysLeft + ' jours avant la fin';
+
+  document.getElementById('clock').textContent =
+    padClock(p.time.hour) + ':' + padClock(p.time.minute) + ':' + padClock(p.time.second);
+
+  // Progress bar — sur le premier rendu on laisse l'anim CSS prendre le temps depuis 0,
+  // ensuite on met à jour "live" sans re-déclencher la transition lente
+  const fill = document.getElementById('progressFill');
+  if (firstRender) {
+    setTimeout(() => {
+      fill.style.width = p.pct + '%';
+      // Après l'anim initiale, on bascule en mode "live" avec transition courte
+      setTimeout(() => fill.classList.add('live'), 1900);
+    }, 400);
+    firstRender = false;
+  } else {
+    fill.style.width = p.pct + '%';
+  }
+}
+
+updateTimeUI();
+setInterval(updateTimeUI, 1000);
+
+// =====================================================
+// STARFIELD BACKDROP
+// =====================================================
+const starCanvas = document.getElementById('starCanvas');
+const starCtx = starCanvas.getContext('2d');
+let stars = [];
+
+function initStars() {
+  starCanvas.width = window.innerWidth;
+  starCanvas.height = window.innerHeight;
+  stars = [];
+  const count = Math.floor((starCanvas.width * starCanvas.height) / 6000);
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * starCanvas.width,
+      y: Math.random() * starCanvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      alpha: Math.random() * 0.6 + 0.2,
+      twinkleSpeed: Math.random() * 0.015 + 0.003,
+      twinklePhase: Math.random() * Math.PI * 2,
+      tint: Math.random() > 0.7 ? 'mauve' : (Math.random() > 0.5 ? 'rose' : 'star'),
+    });
+  }
+}
+initStars();
+window.addEventListener('resize', initStars);
+
+function drawStars(t) {
+  starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+  for (const s of stars) {
+    const a = s.alpha * (0.6 + 0.4 * Math.sin(t * s.twinkleSpeed + s.twinklePhase));
+    let color;
+    if (s.tint === 'mauve') color = `rgba(${T.mauveRgb}, ${a})`;
+    else if (s.tint === 'rose') color = `rgba(${T.roseRgb}, ${a * 0.85})`;
+    else color = `rgba(255, 240, 214, ${a})`;
+    starCtx.fillStyle = color;
+    starCtx.beginPath();
+    starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    starCtx.fill();
+  }
+}
+
+// =====================================================
+// BUBBLES
+// =====================================================
+const canvas = document.getElementById('bubbleCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Bubble palette is derived from the active theme.
+// Cycles through main / light / soft / highlight to give variation while staying in the theme.
+function getCurrentPalette() {
+  if (!T) return ['#e89fff', '#b58bff', '#d4b5ff', '#8b6dcc'];
+  return [T.highlight, T.main, T.light, T.mainSoft];
+}
+function bubbleColorFor(i) {
+  const palette = getCurrentPalette();
+  return palette[i % palette.length];
+}
+
+// State: array of up to 8 bubbles. Empty slots at start = just numbered.
+// Persisted in localStorage so the layout survives reloads.
+const MAX_BUBBLES = 8;
+const STORAGE_KEY = 'sfa_bubbles_v1';
+
+function loadBubbleState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed.length <= MAX_BUBBLES) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  // Default: 8 empty numbered bubbles
+  return Array.from({ length: MAX_BUBBLES }, (_, i) => ({
+    id: 'b' + (i + 1) + '_' + Math.random().toString(36).slice(2, 7),
+    label: '',
+    notes: '',
+    importance: 'mid',
+  }));
+}
+
+function saveBubbleState() {
+  const data = bubbles.map(b => ({ id: b.id, label: b.label, notes: b.notes, importance: b.importance }));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+// Importance levels → size multiplier
+const IMPORTANCE_SCALE = { low: 0.8, mid: 1.0, high: 1.25 };
+function importanceScale(level) {
+  return IMPORTANCE_SCALE[level] || 1.0;
+}
+
+class Bubble {
+  constructor(data, i, total) {
+    this.id = data.id;
+    this.label = data.label || '';
+    this.notes = data.notes || '';
+    this.importance = data.importance || 'mid';
+    this.tag = String(i + 1).padStart(2, '0');
+    this.accent = bubbleColorFor(i);
+
+    this.radius = computeRadiusFor(i, total) * importanceScale(this.importance);
+
+    const { x, y } = computeHomeFor(i, total);
+    this.x = x;
+    this.y = y;
+    this.homeX = x;
+    this.homeY = y;
+
+    this.vx = 0;
+    this.vy = 0;
+
+    this.isDragging = false;
+    this.dragOffsetX = 0;
+    this.dragOffsetY = 0;
+
+    this.hoverScale = 1;
+    this.floatPhase = Math.random() * Math.PI * 2;
+    this.floatAmp = 2 + Math.random() * 2;
+
+    this.spawnScale = 0; // animate in
+  }
+
+  update(t, isHovered, bubbles) {
+    // Spawn animation
+    this.spawnScale += (1 - this.spawnScale) * 0.15;
+
+    if (this.isDragging) {
+      const targetX = mouseX + this.dragOffsetX;
+      const targetY = mouseY + this.dragOffsetY;
+      this.vx = targetX - this.x;
+      this.vy = targetY - this.y;
+      this.x = targetX;
+      this.y = targetY;
+    } else {
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+
+      if (speed > 0.05) {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.97;
+        this.vy *= 0.97;
+
+        this.vx += (this.homeX - this.x) * 0.0008;
+        this.vy += (this.homeY - this.y) * 0.0008;
+
+        for (const other of bubbles) {
+          if (other === this || other.isDragging) continue;
+          const ox = this.x - other.x;
+          const oy = this.y - other.y;
+          const od = Math.sqrt(ox * ox + oy * oy);
+          const minD = this.radius + other.radius + 4;
+          if (od < minD && od > 0) {
+            const overlap = (minD - od) / minD;
+            const push = overlap * 0.5;
+            this.vx += (ox / od) * push;
+            this.vy += (oy / od) * push;
+            other.vx -= (ox / od) * push * 0.5;
+            other.vy -= (oy / od) * push * 0.5;
+          }
+        }
+      } else {
+        this.vx = 0;
+        this.vy = 0;
+      }
+    }
+
+    // Walls
+    const topPad = 90, botPad = 140, sidePad = 30;
+    if (this.x - this.radius < sidePad) { this.x = sidePad + this.radius; this.vx = Math.abs(this.vx) * 0.65; }
+    if (this.x + this.radius > canvas.width - sidePad) { this.x = canvas.width - sidePad - this.radius; this.vx = -Math.abs(this.vx) * 0.65; }
+    if (this.y - this.radius < topPad) { this.y = topPad + this.radius; this.vy = Math.abs(this.vy) * 0.65; }
+    if (this.y + this.radius > canvas.height - botPad) { this.y = canvas.height - botPad - this.radius; this.vy = -Math.abs(this.vy) * 0.65; }
+
+    const targetScale = isHovered ? 1.06 : 1;
+    this.hoverScale += (targetScale - this.hoverScale) * 0.18;
+
+    this.floatPhase += 0.015;
+  }
+
+  draw(ctx, t) {
+    const floatY = Math.sin(this.floatPhase) * this.floatAmp;
+    const drawX = this.x;
+    const drawY = this.y + (this.isDragging ? 0 : floatY);
+
+    const r = this.radius * this.hoverScale * this.spawnScale;
+    if (r < 1) return;
+
+    ctx.save();
+    ctx.translate(drawX, drawY);
+
+    // Outer glow
+    const glowR = r * 1.8;
+    const glow = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, glowR);
+    glow.addColorStop(0, this.accent + '55');
+    glow.addColorStop(0.5, this.accent + '18');
+    glow.addColorStop(1, this.accent + '00');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Planet body
+    const body = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
+    body.addColorStop(0, this.lightenAccent(this.accent, 0.35));
+    body.addColorStop(0.55, this.accent);
+    body.addColorStop(1, this.darkenAccent(this.accent, 0.5));
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rim
+    ctx.strokeStyle = this.lightenAccent(this.accent, 0.4) + '99';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner ring
+    ctx.strokeStyle = '#ffffff20';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.28, -r * 0.38, r * 0.35, r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tag — placement depends on whether there's a label
+    const hasLabel = this.label && this.label.trim().length > 0;
+    ctx.fillStyle = 'rgba(10, 6, 24, 0.7)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const tagFontSize = Math.max(11, Math.min(16, r / 7));
+    ctx.font = `italic 400 ${tagFontSize}px "Fraunces", serif`;
+
+    if (hasLabel) {
+      // Tag above, label in center
+      ctx.fillText('[ ' + this.tag + ' ]', 0, -r * 0.52);
+
+      ctx.fillStyle = '#0a0618';
+      const words = this.label.split(' ');
+      const lines = [];
+      let current = '';
+      const fontSize = Math.max(13, Math.min(24, r / 4.6));
+      const maxChars = Math.max(4, Math.floor(r / (fontSize * 0.32)));
+      for (const w of words) {
+        if ((current + ' ' + w).trim().length > maxChars && current) {
+          lines.push(current.trim());
+          current = w;
+        } else {
+          current += ' ' + w;
+        }
+      }
+      if (current) lines.push(current.trim());
+
+      ctx.font = `600 ${fontSize}px "Fraunces", serif`;
+      const lh = fontSize * 1.15;
+      const startY = -((lines.length - 1) * lh) / 2 + 3;
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 0, startY + i * lh);
+      });
+    } else {
+      // Empty — just show the number centered, larger
+      ctx.fillStyle = 'rgba(10, 6, 24, 0.75)';
+      const emptyFontSize = Math.max(16, Math.min(32, r / 3.6));
+      ctx.font = `italic 400 ${emptyFontSize}px "Fraunces", serif`;
+      ctx.fillText('[ ' + this.tag + ' ]', 0, 0);
+    }
+
+    // Bottom dot
+    ctx.fillStyle = 'rgba(10, 6, 24, 0.4)';
+    ctx.beginPath();
+    ctx.arc(0, r * 0.6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  lightenAccent(hex, amount) {
+    const c = this.hexToRgb(hex);
+    return `rgb(${Math.min(255, c.r + (255 - c.r) * amount)}, ${Math.min(255, c.g + (255 - c.g) * amount)}, ${Math.min(255, c.b + (255 - c.b) * amount)})`;
+  }
+  darkenAccent(hex, amount) {
+    const c = this.hexToRgb(hex);
+    return `rgb(${c.r * (1 - amount)}, ${c.g * (1 - amount)}, ${c.b * (1 - amount)})`;
+  }
+  hexToRgb(hex) {
+    const h = hex.replace('#', '');
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 4), 16),
+      b: parseInt(h.substring(4, 6), 16),
+    };
+  }
+
+  contains(px, py) {
+    const dx = px - this.x;
+    const dy = py - this.y;
+    const r = this.radius * this.hoverScale;
+    return (dx * dx + dy * dy) <= r * r;
+  }
+}
+
+// =====================================================
+// SIZE & POSITION — adaptive to bubble count
+// =====================================================
+function computeRadiusFor(i, total) {
+  // Radius grows when there are fewer bubbles
+  // 1 → huge, 8 → current size
+  const base = Math.min(canvas.width, canvas.height);
+  const scaleByCount = {
+    1: 0.25,
+    2: 0.18,
+    3: 0.15,
+    4: 0.13,
+    5: 0.115,
+    6: 0.10,
+    7: 0.095,
+    8: 0.088,
+  }[total] || 0.088;
+  return Math.max(60, base * scaleByCount);
+}
+
+function computeHomeFor(i, total) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  if (total === 1) {
+    return { x: cx, y: cy };
+  }
+  if (total === 2) {
+    const offset = Math.min(canvas.width, canvas.height) * 0.22;
+    return { x: cx + (i === 0 ? -offset : offset), y: cy };
+  }
+  const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
+  const scaleByCount = { 3: 0.22, 4: 0.26, 5: 0.30, 6: 0.32, 7: 0.33, 8: 0.34 };
+  const dist = Math.min(canvas.width, canvas.height) * (scaleByCount[total] || 0.34);
+  return { x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist };
+}
+
+function rebuildBubbles(state) {
+  const newBubbles = state.map((d, i) => new Bubble(d, i, state.length));
+  return newBubbles;
+}
+
+// =====================================================
+// ADD / REMOVE
+// =====================================================
+// =====================================================
+// SETTINGS / CUSTOMIZATION SYSTEM
+// =====================================================
+const SETTINGS_KEY = 'sfa_settings_v1';
+
+// Predefined themes — each defines all the dynamic colors at once.
+const THEMES = {
+  mauve: {
+    label: 'mauve',
+    bg0: '#0a0618', bg1: '#1a0f35', bg2: '#2a1856',
+    ink: '#e8dffb', inkDim: '#7d6fa8', inkFaint: '#3d2f5c',
+    main: '#b58bff', mainSoft: '#8b6dcc', light: '#d4b5ff', highlight: '#e89fff',
+    inkRgb: '232, 223, 251',
+  },
+  bleu: {
+    label: 'bleu',
+    bg0: '#04081a', bg1: '#0e1b3d', bg2: '#173066',
+    ink: '#e1ecff', inkDim: '#6a85b8', inkFaint: '#2a3d6b',
+    main: '#5a8bff', mainSoft: '#3f6ad4', light: '#a8c4ff', highlight: '#7eb4ff',
+    inkRgb: '225, 236, 255',
+  },
+  rose: {
+    label: 'rose',
+    bg0: '#160510', bg1: '#36092a', bg2: '#5d1247',
+    ink: '#ffe0f1', inkDim: '#a86a89', inkFaint: '#5c2e48',
+    main: '#ff6fbf', mainSoft: '#cc4d97', light: '#ffb3d8', highlight: '#ff8acc',
+    inkRgb: '255, 224, 241',
+  },
+  vert: {
+    label: 'vert',
+    bg0: '#03150a', bg1: '#0a3320', bg2: '#155a3a',
+    ink: '#dffce8', inkDim: '#6ba886', inkFaint: '#2a5c44',
+    main: '#3ed985', mainSoft: '#2ea366', light: '#9ef0c2', highlight: '#5fe89c',
+    inkRgb: '223, 252, 232',
+  },
+  rouge: {
+    label: 'rouge',
+    bg0: '#180404', bg1: '#3a0a0a', bg2: '#601515',
+    ink: '#ffe0dd', inkDim: '#a87870', inkFaint: '#5c2e2e',
+    main: '#ff5550', mainSoft: '#cc3a35', light: '#ffaaa6', highlight: '#ff7a76',
+    inkRgb: '255, 224, 221',
+  },
+  orange: {
+    label: 'orange',
+    bg0: '#180c02', bg1: '#3a1d05', bg2: '#5e3210',
+    ink: '#fff0db', inkDim: '#b08a5a', inkFaint: '#5e3c1a',
+    main: '#ff9b3d', mainSoft: '#cc7a25', light: '#ffc78d', highlight: '#ffb35f',
+    inkRgb: '255, 240, 219',
+  },
+  or: {
+    label: 'or',
+    bg0: '#15110a', bg1: '#332915', bg2: '#594724',
+    ink: '#fff5d9', inkDim: '#b09869', inkFaint: '#5e4d2c',
+    main: '#ffd24a', mainSoft: '#caa42f', light: '#ffe898', highlight: '#ffdf6f',
+    inkRgb: '255, 245, 217',
+  },
+};
+
+// Holds the *active* settings + the current theme reference (T)
+// Compute default dates: today → today + 90 days (in Brussels TZ)
+function defaultDates() {
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Brussels', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+  const start = todayStr;
+  // Compute end = start + 90 days
+  const [y, m, d] = todayStr.split('-').map(n => parseInt(n, 10));
+  const endDate = new Date(Date.UTC(y, m - 1, d + 90));
+  const ey = endDate.getUTCFullYear();
+  const em = String(endDate.getUTCMonth() + 1).padStart(2, '0');
+  const ed = String(endDate.getUTCDate()).padStart(2, '0');
+  return { start, end: `${ey}-${em}-${ed}` };
+}
+const _defaultDates = defaultDates();
+
+const DEFAULTS = {
+  title: '',
+  preTitle: '',
+  subTitle: '',
+  startDate: _defaultDates.start,
+  endDate: _defaultDates.end,
+  theme: 'mauve',
+  view: 'bubbles',          // 'bubbles' | 'calendar'
+  calendarGranularity: 'day' // 'day' | 'week' | 'month'
+};
+let settings = { ...DEFAULTS };
+let T = THEMES.mauve; // active theme
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      settings = { ...DEFAULTS, ...parsed };
+    }
+  } catch (e) {}
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+
+// Convert "#rrggbb" to "r, g, b"
+function hexToRgbStr(hex) {
+  hex = hex.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return r + ', ' + g + ', ' + b;
+}
+
+function applyTheme(themeKey) {
+  const theme = THEMES[themeKey] || THEMES.mauve;
+  const root = document.documentElement;
+  root.style.setProperty('--bg-0', theme.bg0);
+  root.style.setProperty('--bg-1', theme.bg1);
+  root.style.setProperty('--bg-2', theme.bg2);
+  root.style.setProperty('--ink', theme.ink);
+  root.style.setProperty('--ink-dim', theme.inkDim);
+  root.style.setProperty('--ink-faint', theme.inkFaint);
+  root.style.setProperty('--mauve', theme.main);
+  root.style.setProperty('--mauve-soft', theme.mainSoft);
+  root.style.setProperty('--lilac', theme.light);
+  root.style.setProperty('--rose', theme.highlight);
+
+  root.style.setProperty('--mauve-rgb', hexToRgbStr(theme.main));
+  root.style.setProperty('--rose-rgb', hexToRgbStr(theme.highlight));
+  root.style.setProperty('--lilac-rgb', hexToRgbStr(theme.light));
+  root.style.setProperty('--ink-rgb', theme.inkRgb);
+  root.style.setProperty('--bg-1-rgb', hexToRgbStr(theme.bg1));
+  root.style.setProperty('--bg-2-rgb', hexToRgbStr(theme.bg2));
+
+  // Cache for canvas/star drawing (uses template literals)
+  T = {
+    ...theme,
+    mauveRgb: hexToRgbStr(theme.main),
+    roseRgb: hexToRgbStr(theme.highlight),
+  };
+}
+
+// Parse "YYYY-MM-DD" → {y, m, d}
+function parseISODate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return null;
+  return { y: parseInt(m[1], 10), m: parseInt(m[2], 10), d: parseInt(m[3], 10) };
+}
+
+// French month label for a given month number (1-12)
+const MONTH_NAMES_FR = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+                       'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+function applyDates() {
+  const s = parseISODate(settings.startDate);
+  const e = parseISODate(settings.endDate);
+  if (!s || !e) return;
+  // Sanity: end must be strictly after start
+  const sd = toDayNumber(s.y, s.m, s.d);
+  const ed = toDayNumber(e.y, e.m, e.d);
+  if (ed <= sd) return;
+  START = s; END = e;
+  recomputeDateAnchors();
+  updateDateMarkers();
+  // Rebuild calendar if currently visible
+  if (settings.view === 'calendar' && typeof buildCalendar === 'function') {
+    buildCalendar();
+  }
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function updateDateMarkers() {
+  // Side marker (top-left, rotated)
+  const sm = document.getElementById('sideMarkerLeft');
+  if (sm) {
+    sm.textContent = `${pad2(START.d)}.${pad2(START.m)}.${START.y} — ${pad2(END.d)}.${pad2(END.m)}.${END.y}`;
+  }
+  // Bottom progress markers — start, then evenly-spaced months between, then end
+  const markers = document.getElementById('progressMarkers');
+  if (markers) {
+    const startLabel = `${START.d} ${MONTH_NAMES_FR[START.m]} — départ`;
+    const endLabel = `${END.d} ${MONTH_NAMES_FR[END.m]} — fin`;
+    // Compute the months strictly between start month and end month
+    const months = [];
+    let curY = START.y, curM = START.m;
+    // step forward one month past start
+    curM += 1;
+    if (curM > 12) { curM = 1; curY += 1; }
+    while (curY < END.y || (curY === END.y && curM < END.m)) {
+      months.push(MONTH_NAMES_FR[curM]);
+      curM += 1;
+      if (curM > 12) { curM = 1; curY += 1; }
+    }
+    // Limit to a max of 5 in-between months for layout
+    const inBetween = months.length <= 5 ? months : months.filter((_, i) =>
+      i % Math.ceil(months.length / 5) === 0
+    ).slice(0, 5);
+
+    let html = `<span>${startLabel}</span>`;
+    inBetween.forEach(m => { html += `<span>${m}</span>`; });
+    html += `<span class="now">${endLabel}</span>`;
+    markers.innerHTML = html;
+  }
+}
+
+// === TITLE RENDERING ===
+function renderTitle(text) {
+  const el = document.getElementById('titleMain');
+  const topLabel = document.getElementById('topBarLabel');
+  const trimmed = (text || '').trim();
+  if (topLabel) topLabel.textContent = trimmed || 'Mon arc';
+  if (!el) return;
+  if (!trimmed) { el.innerHTML = ''; return; }
+  const words = trimmed.split(/\s+/);
+  if (words.length === 1) {
+    // Just the word, plain
+    el.innerHTML = escapeHtml(words[0]);
+    return;
+  }
+  if (words.length === 2) {
+    // 2 words: 2nd one as accent (to keep visual interest)
+    el.innerHTML = `${escapeHtml(words[0])} <span class="fucking">${escapeHtml(words[1])}</span>`;
+    return;
+  }
+  // 3+: first word, middle words as accent (italic mauve), last word as solid uppercase
+  // "Middle" = everything between first and last
+  const first = words[0];
+  const last = words[words.length - 1];
+  const middle = words.slice(1, -1).join(' ');
+  el.innerHTML = `${escapeHtml(first)} <span class="fucking">${escapeHtml(middle)}</span> <span class="arc">${escapeHtml(last.toUpperCase())}</span>`;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// =====================================================
+// SETTINGS PANEL — bind UI
+// =====================================================
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsClose = document.getElementById('settingsClose');
+const titleInput = document.getElementById('titleInput');
+const preInput = document.getElementById('preInput');
+const subInput = document.getElementById('subInput');
+const startDateInput = document.getElementById('startDateInput');
+const endDateInput = document.getElementById('endDateInput');
+const themeSwatches = document.getElementById('themeSwatches');
+const settingsReset = document.getElementById('settingsReset');
+const addBubbleBtn = document.getElementById('addBubbleBtn');
+const addBubbleCount = document.getElementById('addBubbleCount');
+
+function renderSubtitles() {
+  const pre = document.getElementById('titlePre');
+  const sub = document.getElementById('titleSub');
+  const preWrap = document.querySelector('.title-pre');
+  if (pre) pre.textContent = settings.preTitle || '';
+  if (sub) sub.textContent = settings.subTitle ? `— ${settings.subTitle} —` : '';
+  // Hide diamond wrapper entirely when pre-title is empty
+  if (preWrap) preWrap.style.visibility = (settings.preTitle && settings.preTitle.trim()) ? '' : 'hidden';
+  if (sub) sub.style.visibility = (settings.subTitle && settings.subTitle.trim()) ? '' : 'hidden';
+}
+
+function buildThemeSwatches() {
+  themeSwatches.innerHTML = '';
+  Object.keys(THEMES).forEach(key => {
+    const t = THEMES[key];
+    const sw = document.createElement('button');
+    sw.className = 'theme-swatch' + (settings.theme === key ? ' active' : '');
+    sw.dataset.theme = key;
+    sw.title = t.label;
+    sw.style.background = `radial-gradient(circle at 30% 30%, ${t.light}, ${t.main} 60%, ${t.mainSoft})`;
+    sw.addEventListener('click', () => {
+      settings.theme = key;
+      applyTheme(key);
+      // Reassign bubble colors from new theme palette
+      if (typeof bubbles !== 'undefined' && Array.isArray(bubbles)) {
+        bubbles.forEach((b, i) => { b.accent = bubbleColorFor(i); });
+      }
+      saveSettings();
+      themeSwatches.querySelectorAll('.theme-swatch').forEach(el => el.classList.remove('active'));
+      sw.classList.add('active');
+    });
+    themeSwatches.appendChild(sw);
+  });
+}
+
+function openSettings() {
+  // Sync inputs with current settings
+  titleInput.value = settings.title;
+  preInput.value = settings.preTitle || '';
+  subInput.value = settings.subTitle || '';
+  startDateInput.value = settings.startDate;
+  endDateInput.value = settings.endDate;
+  updateAddBubbleBtn();
+  settingsBtn.classList.add('open');
+  settingsPanel.classList.add('open');
+}
+function closeSettings() {
+  settingsBtn.classList.remove('open');
+  settingsPanel.classList.remove('open');
+  // reset confirming state
+  settingsReset.classList.remove('confirming');
+  settingsReset.textContent = 'réinitialiser';
+}
+
+settingsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (settingsPanel.classList.contains('open')) closeSettings();
+  else openSettings();
+});
+settingsClose.addEventListener('click', closeSettings);
+// Close on outside click
+document.addEventListener('mousedown', (e) => {
+  if (!settingsPanel.classList.contains('open')) return;
+  if (settingsPanel.contains(e.target) || settingsBtn.contains(e.target)) return;
+  closeSettings();
+});
+// Esc to close
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && settingsPanel.classList.contains('open')) closeSettings();
+});
+
+// Title editing (live)
+titleInput.addEventListener('input', () => {
+  settings.title = titleInput.value;
+  renderTitle(settings.title);
+  saveSettings();
+});
+
+// Subtitles editing (live)
+preInput.addEventListener('input', () => {
+  settings.preTitle = preInput.value;
+  renderSubtitles();
+  saveSettings();
+});
+subInput.addEventListener('input', () => {
+  settings.subTitle = subInput.value;
+  renderSubtitles();
+  saveSettings();
+});
+
+// Date editing
+startDateInput.addEventListener('change', () => {
+  // Validate: start must be before end
+  const newStart = parseISODate(startDateInput.value);
+  const curEnd = parseISODate(settings.endDate);
+  if (!newStart) return;
+  if (curEnd && toDayNumber(newStart.y, newStart.m, newStart.d) >= toDayNumber(curEnd.y, curEnd.m, curEnd.d)) {
+    // revert
+    startDateInput.value = settings.startDate;
+    return;
+  }
+  settings.startDate = startDateInput.value;
+  applyDates();
+  updateTimeUI();
+  saveSettings();
+});
+endDateInput.addEventListener('change', () => {
+  const newEnd = parseISODate(endDateInput.value);
+  const curStart = parseISODate(settings.startDate);
+  if (!newEnd) return;
+  if (curStart && toDayNumber(newEnd.y, newEnd.m, newEnd.d) <= toDayNumber(curStart.y, curStart.m, curStart.d)) {
+    endDateInput.value = settings.endDate;
+    return;
+  }
+  settings.endDate = endDateInput.value;
+  applyDates();
+  updateTimeUI();
+  saveSettings();
+});
+
+// Reset button (2-click confirmation)
+let resetTimer = null;
+settingsReset.addEventListener('click', () => {
+  if (settingsReset.classList.contains('confirming')) {
+    // Confirmed — wipe and reload defaults
+    settings = { ...DEFAULTS };
+    saveSettings();
+    titleInput.value = settings.title;
+    preInput.value = settings.preTitle;
+    subInput.value = settings.subTitle;
+    startDateInput.value = settings.startDate;
+    endDateInput.value = settings.endDate;
+    renderTitle(settings.title);
+    renderSubtitles();
+    applyDates();
+    applyTheme(settings.theme);
+    bubbles.forEach((b, i) => { b.accent = bubbleColorFor(i); });
+    updateTimeUI();
+    buildThemeSwatches();
+    settingsReset.classList.remove('confirming');
+    settingsReset.textContent = 'réinitialiser';
+    clearTimeout(resetTimer);
+  } else {
+    settingsReset.classList.add('confirming');
+    settingsReset.textContent = 'confirmer ?';
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      settingsReset.classList.remove('confirming');
+      settingsReset.textContent = 'réinitialiser';
+    }, 2500);
+  }
+});
+
+// =====================================================
+// ADD BUBBLE (now inside settings panel)
+// =====================================================
+function updateAddBubbleBtn() {
+  addBubbleCount.textContent = bubbles.length + ' / ' + MAX_BUBBLES;
+  addBubbleBtn.disabled = bubbles.length >= MAX_BUBBLES;
+}
+
+// Initial build (bubbles)
+let bubbles = rebuildBubbles(loadBubbleState());
+
+function recomputeLayout() {
+  bubbles.forEach((b, i) => {
+    b.radius = computeRadiusFor(i, bubbles.length) * importanceScale(b.importance);
+    const { x, y } = computeHomeFor(i, bubbles.length);
+    b.homeX = x;
+    b.homeY = y;
+    b.tag = String(i + 1).padStart(2, '0');
+  });
+}
+
+addBubbleBtn.addEventListener('click', () => {
+  if (bubbles.length >= MAX_BUBBLES) return;
+  const newData = {
+    id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    label: '',
+    notes: '',
+  };
+  const state = bubbles.map(b => ({ id: b.id, label: b.label, notes: b.notes }));
+  state.push(newData);
+  bubbles = rebuildBubbles(state);
+  saveBubbleState();
+  updateAddBubbleBtn();
+});
+
+function removeBubble(bubble) {
+  const idx = bubbles.findIndex(b => b.id === bubble.id);
+  if (idx === -1) return;
+  const state = bubbles.map(b => ({ id: b.id, label: b.label, notes: b.notes }));
+  state.splice(idx, 1);
+  if (state.length === 0) {
+    // Keep at least one empty bubble
+    state.push({
+      id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      label: '',
+      notes: '',
+    });
+  }
+  bubbles = rebuildBubbles(state);
+  saveBubbleState();
+  updateAddBubbleBtn();
+}
+
+// =====================================================
+// DRAG / CLICK
+// =====================================================
+let draggedBubble = null;
+let dragStartTime = 0;
+let dragStartX = 0, dragStartY = 0;
+let hasMoved = false;
+let lastMouseX = mouseX, lastMouseY = mouseY;
+let mouseVX = 0, mouseVY = 0;
+
+window.addEventListener('mousemove', (e) => {
+  mouseVX = e.clientX - lastMouseX;
+  mouseVY = e.clientY - lastMouseY;
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+
+  if (draggedBubble) {
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    if (Math.sqrt(dx*dx + dy*dy) > 5) hasMoved = true;
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    if (bubbles[i].contains(e.clientX, e.clientY)) {
+      draggedBubble = bubbles[i];
+      draggedBubble.isDragging = true;
+      draggedBubble.dragOffsetX = draggedBubble.x - e.clientX;
+      draggedBubble.dragOffsetY = draggedBubble.y - e.clientY;
+      dragStartTime = Date.now();
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      hasMoved = false;
+      cursor.classList.add('grabbing');
+      bubbles.splice(i, 1);
+      bubbles.push(draggedBubble);
+      break;
+    }
+  }
+});
+
+window.addEventListener('mouseup', (e) => {
+  if (draggedBubble) {
+    const dt = Date.now() - dragStartTime;
+    draggedBubble.isDragging = false;
+
+    if (hasMoved) {
+      draggedBubble.vx = mouseVX * 1.1;
+      draggedBubble.vy = mouseVY * 1.1;
+    } else {
+      if (dt < 300) {
+        openNotes(draggedBubble);
+      }
+      draggedBubble.vx = 0;
+      draggedBubble.vy = 0;
+    }
+
+    draggedBubble = null;
+    cursor.classList.remove('grabbing');
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  let over = false;
+  for (const b of bubbles) {
+    if (b.contains(e.clientX, e.clientY)) { over = true; break; }
+  }
+  if (over) cursor.classList.add('hover');
+  else cursor.classList.remove('hover');
+});
+
+// =====================================================
+// NOTES PANEL (with editable title + delete)
+// =====================================================
+const notesOverlay = document.getElementById('notesOverlay');
+const notesTag = document.getElementById('notesTag');
+const notesTitleInput = document.getElementById('notesTitleInput');
+const notesSub = document.getElementById('notesSub');
+const notesTextarea = document.getElementById('notesTextarea');
+const notesClose = document.getElementById('notesClose');
+const notesDelete = document.getElementById('notesDelete');
+const savedIndicator = document.getElementById('savedIndicator');
+const importanceButtons = document.querySelectorAll('.importance-btn');
+
+let currentBubble = null;
+let saveTimeout = null;
+let deleteConfirmTimer = null;
+
+function syncImportanceButtons(level) {
+  importanceButtons.forEach(b => {
+    b.classList.toggle('active', b.dataset.importance === level);
+  });
+}
+
+function openNotes(bubble) {
+  currentBubble = bubble;
+  notesTag.textContent = `[ ${bubble.tag} ] — Domaine`;
+  notesTitleInput.value = bubble.label || '';
+  notesSub.textContent = 'Notes, idées, prochaines actions';
+  notesTextarea.value = bubble.notes || '';
+  syncImportanceButtons(bubble.importance || 'mid');
+
+  // Reset delete button
+  notesDelete.classList.remove('confirming');
+  notesDelete.textContent = 'supprimer';
+  clearTimeout(deleteConfirmTimer);
+
+  notesOverlay.classList.add('active');
+  // Focus title if empty, else notes
+  setTimeout(() => {
+    if (!bubble.label) notesTitleInput.focus();
+    else notesTextarea.focus();
+  }, 280);
+}
+
+function closeNotes() {
+  notesOverlay.classList.remove('active');
+  currentBubble = null;
+  notesDelete.classList.remove('confirming');
+  notesDelete.textContent = 'supprimer';
+  clearTimeout(deleteConfirmTimer);
+}
+
+notesClose.addEventListener('click', closeNotes);
+notesOverlay.addEventListener('click', (e) => {
+  if (e.target === notesOverlay) closeNotes();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && currentBubble) closeNotes();
+});
+
+// Debounced save helper
+function scheduleSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveBubbleState();
+    savedIndicator.classList.add('show');
+    setTimeout(() => savedIndicator.classList.remove('show'), 1200);
+  }, 350);
+}
+
+// Live title editing — updates the bubble immediately
+notesTitleInput.addEventListener('input', () => {
+  if (!currentBubble) return;
+  currentBubble.label = notesTitleInput.value;
+  scheduleSave();
+});
+
+notesTextarea.addEventListener('input', () => {
+  if (!currentBubble) return;
+  currentBubble.notes = notesTextarea.value;
+  scheduleSave();
+});
+
+// Importance level selection
+importanceButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!currentBubble) return;
+    const level = btn.dataset.importance;
+    currentBubble.importance = level;
+    syncImportanceButtons(level);
+    // Resize this bubble immediately
+    const idx = bubbles.indexOf(currentBubble);
+    if (idx !== -1) {
+      currentBubble.radius = computeRadiusFor(idx, bubbles.length) * importanceScale(level);
+    }
+    scheduleSave();
+  });
+});
+
+// Delete with 2-step confirmation
+notesDelete.addEventListener('click', () => {
+  if (!currentBubble) return;
+  if (!notesDelete.classList.contains('confirming')) {
+    notesDelete.classList.add('confirming');
+    notesDelete.textContent = 'confirmer ?';
+    clearTimeout(deleteConfirmTimer);
+    deleteConfirmTimer = setTimeout(() => {
+      notesDelete.classList.remove('confirming');
+      notesDelete.textContent = 'supprimer';
+    }, 2500);
+  } else {
+    const toRemove = currentBubble;
+    closeNotes();
+    removeBubble(toRemove);
+  }
+});
+
+// =====================================================
+// MAIN LOOP
+// =====================================================
+function loop(t) {
+  drawStars(t);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let hoveredIndex = -1;
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    if (bubbles[i].contains(mouseX, mouseY)) {
+      hoveredIndex = i;
+      break;
+    }
+  }
+
+  bubbles.forEach((b, i) => {
+    b.update(t, i === hoveredIndex, bubbles);
+    b.draw(ctx, t);
+  });
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Resize
+window.addEventListener('resize', () => {
+  resize();
+  recomputeLayout();
+});
+
+// =====================================================
+// EXPORT / IMPORT
+// =====================================================
+function collectAllData() {
+  const data = { version: 1, exportedAt: new Date().toISOString(), keys: {} };
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sfa_')) {
+        data.keys[k] = localStorage.getItem(k);
+      }
+    }
+  } catch (e) {}
+  return data;
+}
+
+function downloadFile(filename, content) {
+  const blob = new Blob([content], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const data = collectAllData();
+  const iso = new Date().toISOString().slice(0, 10);
+  const safeTitle = (settings.title || 'arc').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'arc';
+  downloadFile(safeTitle + '-' + iso + '.json', JSON.stringify(data, null, 2));
+});
+
+const importFileInput = document.getElementById('importFile');
+document.getElementById('importBtn').addEventListener('click', () => {
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (!parsed || typeof parsed !== 'object' || !parsed.keys) {
+        throw new Error('Format de fichier non reconnu');
+      }
+      if (!confirm('Importer ce fichier écrasera ta configuration et tes notes actuelles. Continuer ?')) {
+        importFileInput.value = '';
+        return;
+      }
+      // Wipe existing sfa_* keys
+      try {
+        const toRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('sfa_')) toRemove.push(k);
+        }
+        toRemove.forEach(k => localStorage.removeItem(k));
+      } catch (err) {}
+      // Restore from file
+      Object.keys(parsed.keys).forEach(key => {
+        try { localStorage.setItem(key, parsed.keys[key]); } catch (err) {}
+      });
+      importFileInput.value = '';
+      alert('Configuration importée. La page va se recharger.');
+      location.reload();
+    } catch (err) {
+      alert('Fichier invalide : ' + err.message);
+      importFileInput.value = '';
+    }
+  };
+  reader.readAsText(file);
+});
+
+// =====================================================
+// CALENDAR VIEW
+// =====================================================
+const calendarView = document.getElementById('calendarView');
+const calendarGrid = document.getElementById('calendarGrid');
+const calendarStat = document.getElementById('calendarStat');
+const viewToggleBtns = document.querySelectorAll('.view-toggle-btn');
+const granularityBtns = document.querySelectorAll('.granularity-btn');
+
+// Convert a day-number (julian-like) back to {year, month, day}
+// Use UTC math (we treat day-numbers as calendar days, not seconds)
+function dayNumberToDate(dn) {
+  // Inverse of toDayNumber. Use Date arithmetic via reference date 2000-01-01.
+  const ref = toDayNumber(2000, 1, 1);
+  const offset = dn - ref;
+  const d = new Date(Date.UTC(2000, 0, 1));
+  d.setUTCDate(d.getUTCDate() + offset);
+  return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+}
+
+const FR_DAYS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
+const FR_MONTHS_SHORT = ['', 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+function formatDateFr(y, m, d) {
+  // Compute weekday using UTC date
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const wd = (dt.getUTCDay() + 6) % 7; // make Monday=0
+  return `${FR_DAYS[wd]} ${d} ${FR_MONTHS_SHORT[m]} ${y}`;
+}
+
+function getCellSizeFor(granularity, totalCells) {
+  // Adjust bubble size so the grid feels balanced regardless of count
+  if (granularity === 'month') return 64;
+  if (granularity === 'week') {
+    if (totalCells <= 12) return 48;
+    if (totalCells <= 26) return 38;
+    return 30;
+  }
+  // day
+  if (totalCells <= 30) return 38;
+  if (totalCells <= 60) return 30;
+  if (totalCells <= 120) return 24;
+  if (totalCells <= 200) return 20;
+  return 16;
+}
+
+function getColumnsFor(granularity, totalCells) {
+  if (granularity === 'day') return 7;             // weeks (Mon-Sun)
+  if (granularity === 'week') {
+    if (totalCells <= 8) return totalCells;
+    if (totalCells <= 16) return 8;
+    return 10;
+  }
+  // month
+  if (totalCells <= 4) return totalCells;
+  if (totalCells <= 12) return 4;
+  return 6;
+}
+
+function buildCalendar() {
+  if (!calendarGrid) return;
+  const granularity = settings.calendarGranularity;
+  const today = nowInBrussels();
+  const todayDN = toDayNumber(today.year, today.month, today.day);
+  const sDN = startDay;
+  const eDN = endDay;
+  const totalDaysInArc = eDN - sDN;
+
+  let cells = [];
+  if (granularity === 'day') {
+    // One cell per day, from start to end inclusive of start, exclusive of end
+    for (let dn = sDN; dn < eDN; dn++) {
+      const date = dayNumberToDate(dn);
+      let status;
+      if (dn < todayDN) status = 'past';
+      else if (dn === todayDN) status = 'now';
+      else status = 'future';
+      cells.push({
+        status,
+        tooltip: formatDateFr(date.y, date.m, date.d),
+      });
+    }
+  } else if (granularity === 'week') {
+    // Group into 7-day blocks starting from sDN
+    let cursor = sDN;
+    let weekIdx = 1;
+    while (cursor < eDN) {
+      const blockEnd = Math.min(cursor + 7, eDN);
+      const dateStart = dayNumberToDate(cursor);
+      const dateEnd = dayNumberToDate(blockEnd - 1);
+      let status;
+      if (todayDN >= blockEnd) status = 'past';
+      else if (todayDN >= cursor && todayDN < blockEnd) status = 'now';
+      else status = 'future';
+      cells.push({
+        status,
+        tooltip: `Sem. ${weekIdx} · ${dateStart.d} ${FR_MONTHS_SHORT[dateStart.m]} → ${dateEnd.d} ${FR_MONTHS_SHORT[dateEnd.m]}`,
+      });
+      cursor = blockEnd;
+      weekIdx++;
+    }
+  } else {
+    // month: one cell per calendar month between start and end
+    let curY = START.y, curM = START.m;
+    while (curY < END.y || (curY === END.y && curM <= END.m)) {
+      const monthStartDN = toDayNumber(curY, curM, 1);
+      // Last day of month
+      const nextMonth = curM === 12 ? { y: curY + 1, m: 1 } : { y: curY, m: curM + 1 };
+      const monthEndDN = toDayNumber(nextMonth.y, nextMonth.m, 1);
+      // Clip to arc range
+      const cellStart = Math.max(monthStartDN, sDN);
+      const cellEnd = Math.min(monthEndDN, eDN);
+      if (cellEnd > cellStart) {
+        let status;
+        if (todayDN >= cellEnd) status = 'past';
+        else if (todayDN >= cellStart && todayDN < cellEnd) status = 'now';
+        else status = 'future';
+        cells.push({
+          status,
+          tooltip: `${FR_MONTHS_SHORT[curM]} ${curY}`,
+        });
+      }
+      curM++;
+      if (curM > 12) { curM = 1; curY++; }
+    }
+  }
+
+  // Render
+  const size = getCellSizeFor(granularity, cells.length);
+  const cols = getColumnsFor(granularity, cells.length);
+  calendarGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  calendarGrid.style.setProperty('--bubble-size', size + 'px');
+  // Apply size on each child via inline style too (cleaner)
+  calendarGrid.innerHTML = cells.map(c =>
+    `<div class="cal-bubble ${c.status}" style="--bubble-size:${size}px">
+      <span class="cal-tooltip">${escapeHtml(c.tooltip)}</span>
+    </div>`
+  ).join('');
+
+  // Update top stat
+  const past = cells.filter(c => c.status === 'past').length;
+  const future = cells.filter(c => c.status === 'future').length;
+  const unitLabel = granularity === 'day' ? 'jours' : granularity === 'week' ? 'semaines' : 'mois';
+  calendarStat.innerHTML = `<b>${past}</b> ${unitLabel} écoulé${past > 1 ? 's' : ''} · <b>${future}</b> à venir`;
+}
+
+function setView(view) {
+  settings.view = view;
+  saveSettings();
+  if (view === 'calendar') {
+    document.body.classList.add('view-calendar');
+    calendarView.classList.add('active');
+    buildCalendar();
+  } else {
+    document.body.classList.remove('view-calendar');
+    calendarView.classList.remove('active');
+  }
+  viewToggleBtns.forEach(b => b.classList.toggle('active', b.dataset.view === view));
+}
+
+function setGranularity(g) {
+  settings.calendarGranularity = g;
+  saveSettings();
+  granularityBtns.forEach(b => b.classList.toggle('active', b.dataset.granularity === g));
+  buildCalendar();
+}
+
+viewToggleBtns.forEach(btn => {
+  btn.addEventListener('click', () => setView(btn.dataset.view));
+});
+granularityBtns.forEach(btn => {
+  btn.addEventListener('click', () => setGranularity(btn.dataset.granularity));
+});
+
+// Rebuild calendar every minute (so "today" stays correct around midnight) and on date changes
+setInterval(() => {
+  if (settings.view === 'calendar') buildCalendar();
+}, 60000);
+
+// =====================================================
+// BOOT — apply persisted settings
+// =====================================================
+loadSettings();
+applyTheme(settings.theme);
+applyDates();
+renderTitle(settings.title);
+renderSubtitles();
+buildThemeSwatches();
+updateAddBubbleBtn();
+// Re-tint existing bubbles to match the loaded theme (they were created with default mauve)
+bubbles.forEach((b, i) => { b.accent = bubbleColorFor(i); });
+// Apply persisted view + granularity
+granularityBtns.forEach(b => b.classList.toggle('active', b.dataset.granularity === settings.calendarGranularity));
+setView(settings.view);
+</script>
+
+</body>
+</html>
