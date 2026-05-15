@@ -401,7 +401,7 @@
     letter-spacing: 0.4em;
     color: var(--ink-faint);
     text-transform: uppercase;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
     font-style: italic;
   }
   .title-pre span { color: var(--mauve-soft); opacity: 0.6; }
@@ -437,7 +437,7 @@
     letter-spacing: 0.32em;
     color: var(--ink-faint);
     text-transform: uppercase;
-    margin-top: 32px;
+    margin-top: 56px;
   }
 
   /* ==== PROGRESS ==== */
@@ -680,18 +680,10 @@
   .notes-importance {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     margin-bottom: 16px;
     padding-bottom: 14px;
     border-bottom: 1px solid var(--line);
-  }
-  .notes-importance-label {
-    font-family: 'Fraunces', serif;
-    font-size: 11px;
-    font-style: italic;
-    letter-spacing: 0.2em;
-    color: var(--ink-dim);
-    text-transform: uppercase;
   }
   .importance-dots {
     display: flex;
@@ -730,17 +722,6 @@
   .importance-btn .dot-1 { width: 4px; height: 4px; }
   .importance-btn .dot-2 { width: 6px; height: 6px; }
   .importance-btn .dot-3 { width: 8px; height: 8px; }
-  .notes-sub {
-    font-family: 'Fraunces', serif;
-    font-size: 11px;
-    font-style: italic;
-    letter-spacing: 0.2em;
-    color: var(--ink-dim);
-    text-transform: uppercase;
-    margin-bottom: 22px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--line);
-  }
   .notes-textarea {
     flex: 1;
     min-height: 260px;
@@ -756,6 +737,28 @@
     resize: none;
     outline: none;
     transition: border-color 0.2s ease;
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--mauve-rgb), 0.25) transparent;
+  }
+  /* WebKit / Blink (Chrome, Safari, Edge) */
+  .notes-textarea::-webkit-scrollbar {
+    width: 6px;
+  }
+  .notes-textarea::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px 0;
+  }
+  .notes-textarea::-webkit-scrollbar-thumb {
+    background: rgba(var(--mauve-rgb), 0.25);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+  .notes-textarea::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--mauve-rgb), 0.5);
+  }
+  .notes-textarea::-webkit-scrollbar-corner {
+    background: transparent;
   }
   .notes-textarea::placeholder {
     color: var(--ink-faint);
@@ -1034,6 +1037,46 @@
   .settings-input[type="date"] {
     color-scheme: dark;
     font-style: italic;
+    letter-spacing: 0.04em;
+    /* On WebKit, hide default text rendering tweaks */
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  /* The calendar icon on the right of date inputs */
+  .settings-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.65) sepia(0.5) hue-rotate(220deg) saturate(2);
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 2px;
+    border-radius: 50%;
+  }
+  .settings-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background-color: rgba(var(--mauve-rgb), 0.15);
+  }
+  .settings-input[type="date"]::-webkit-datetime-edit {
+    color: var(--ink);
+  }
+  .settings-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  .settings-input[type="date"]::-webkit-datetime-edit-text {
+    color: var(--ink-dim);
+    padding: 0 2px;
+  }
+  .settings-input[type="date"]::-webkit-datetime-edit-month-field,
+  .settings-input[type="date"]::-webkit-datetime-edit-day-field,
+  .settings-input[type="date"]::-webkit-datetime-edit-year-field {
+    color: var(--ink);
+  }
+  .settings-input[type="date"]:focus::-webkit-datetime-edit-month-field:focus,
+  .settings-input[type="date"]:focus::-webkit-datetime-edit-day-field:focus,
+  .settings-input[type="date"]:focus::-webkit-datetime-edit-year-field:focus {
+    background: rgba(var(--mauve-rgb), 0.2);
+    color: var(--lilac);
+    border-radius: 2px;
   }
   .settings-hint {
     margin-top: 5px;
@@ -1279,7 +1322,6 @@
     <div class="notes-tag" id="notesTag">[ 00 ] — Domaine</div>
     <input class="notes-title-input" id="notesTitleInput" type="text" placeholder="Donne un titre à cette bulle…" maxlength="40"/>
     <div class="notes-importance">
-      <span class="notes-importance-label">Importance</span>
       <div class="importance-dots">
         <button class="importance-btn" data-importance="low" title="Pas important">
           <span class="dot dot-1"></span>
@@ -1292,7 +1334,6 @@
         </button>
       </div>
     </div>
-    <div class="notes-sub" id="notesSub">Notes, idées, prochaines actions</div>
     <textarea class="notes-textarea" id="notesTextarea" placeholder="Écris ici. Tout est sauvegardé automatiquement."></textarea>
     <div class="notes-footer">
       <button class="notes-delete" id="notesDelete">supprimer</button>
@@ -2327,7 +2368,6 @@ window.addEventListener('mousemove', (e) => {
 const notesOverlay = document.getElementById('notesOverlay');
 const notesTag = document.getElementById('notesTag');
 const notesTitleInput = document.getElementById('notesTitleInput');
-const notesSub = document.getElementById('notesSub');
 const notesTextarea = document.getElementById('notesTextarea');
 const notesClose = document.getElementById('notesClose');
 const notesDelete = document.getElementById('notesDelete');
@@ -2348,7 +2388,6 @@ function openNotes(bubble) {
   currentBubble = bubble;
   notesTag.textContent = `[ ${bubble.tag} ] — Domaine`;
   notesTitleInput.value = bubble.label || '';
-  notesSub.textContent = 'Notes, idées, prochaines actions';
   notesTextarea.value = bubble.notes || '';
   syncImportanceButtons(bubble.importance || 'mid');
 
